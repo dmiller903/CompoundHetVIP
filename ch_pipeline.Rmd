@@ -1,0 +1,30 @@
+---
+title: "CH Pipeline"
+author: "Dustin Miller"
+date: "8/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{bash}
+# Keep only the variant sites of the gVCF
+docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/ch_pipeline:V1 python3 keepVariantSites.py > keepVariantSites.out
+```
+
+```{bash}
+# split, left-align, and trim variants with vt per GEMINI
+docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/ch_pipeline:V1 bash vt_proband.sh > vt_proband.out
+```
+
+```{bash}
+# Use snpEff to annotate vcf file
+docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/ch_pipeline:V1 bash annotate_proband.sh > annotate_proband.out
+```
+
+```{bash}
+# load in GEMINI database
+docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/ch_pipeline:V1 bash gemini_proband.sh > gemini_proband.out
+```
