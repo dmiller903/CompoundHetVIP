@@ -1,30 +1,67 @@
 ---
 title: "CH Pipeline"
 author: "Dustin Miller"
-date: "8/6/2019"
+date: "10/8/2019"
 output: html_document
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Kids First Manifest
+
+### Pull Docker
+```{bash, eval = F}
+docker pull python:3.8-rc-slim-buster
+```
+
+### Combine manifest, biospecimen, and clincal files
+```{bash, eval = F}
+docker run -v /Data/KidsFirst/idiopathic_scoliosis/gVCF:/proj -w /proj -t python:3.8-rc-slim-buster python3 kids_first_meta.py kidsfirst-participant-family-manifest_2019-09-23.tsv participants_biospecimen_20190923.tsv participant_clinical_20190923.tsv /proj/tmp/combined.tsv
+```
+
+### Build Docker image
+```{bash}
+docker build -t parse-pipeline .
+```
+
+### Parse files to include variant only sites in probands and corresponding sites in parents for each trio
+```{bash}
+docker run -d -v /Data/KidsFirst/idiopathic_scoliosis/gVCF:/proj -w /proj -t parse-pipeline python3 parse.py /proj/ /proj/tmp/sample_data.tsv > parse.out
+```
+
+
 ```{bash}
 # Keep only the variant sites of the gVCF
-docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/ch_pipeline:V1 python3 keepVariantSites.py > keepVariantSites.out
+docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/\
+ch_pipeline:V1 python3 keepVariantSites_proband.py > keepVariantSites_proband.out
+# This takes about 18 min 10 sec per file
 ```
 
 ```{bash}
-# split, left-align, and trim variants with vt per GEMINI
-docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/ch_pipeline:V1 bash vt_proband.sh > vt_proband.out
+# split, left-align, and trim variants with vt per GEMINI. GRCh38 used as 
+# reference as this is the referenced used to generate original gVCF files. 
+docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/\
+ch_pipeline:V1 bash vt_proband.sh > vt_proband.out
+# This takes about 3 min 53 seconds per file
 ```
 
 ```{bash}
-# Use snpEff to annotate vcf file
-docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/ch_pipeline:V1 bash annotate_proband.sh > annotate_proband.out
+# Use snpEff to annotate vcf file. GRCh37.75 is used as the reference genome as
+# GEMINI only supports annotations made from GRCh37.
+docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/\
+ch_pipeline:V1 bash annotate_proband.sh > annotate_proband.out
+# This takes about 70 min per file
 ```
 
 ```{bash}
 # load in GEMINI database
-docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/ch_pipeline:V1 bash gemini_proband.sh > gemini_proband.out
+docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/\
+ch_pipeline:V1 bash gemini_proband.sh > gemini_proband.out
+# This takes 98 min per file
 ```
+
+```{bash}
+gemini query -q "select gene, start, end, ref, alt, (gts).(*) from variants where is_lof = 1 and aaf >= 0.005" --gt-filter "(gt_types).(*).(== HET).(all) or (gt_types).(*).(== HOM_ALT).(all) and (gt_depths).(*).(>= 20).(all)" --header proband_gemini.db > test.vcf
+```
+
