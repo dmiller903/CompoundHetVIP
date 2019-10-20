@@ -3,6 +3,7 @@
 #Import necessary packages
 import time
 import argparse
+import pandas as pd
 
 #Save time that script started
 startTime = time.time()
@@ -12,7 +13,7 @@ parser = argparse.ArgumentParser(
     description="Combine a manifest, biospecimen, and clinical file into an output TSV"
 )
 parser.add_argument(
-    "manifestFile", 
+    "manifestFile",
     help='Path to a manifest TSV file with columns "File Name", "Family Id", "Aliquot External ID", and "Proband"'
 )
 parser.add_argument(
@@ -29,75 +30,56 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-#Dictionary to store needed information in
-outputDict = {}
+# Load TSV files
+biospecimen_df = pd.read_csv(
+    args.biospecimenFile,
+    sep="\t",
+    usecols=["External Aliquot Id", "Biospecimens Id"]
+).rename(columns={
+    "External Aliquot Id": "external_id",
+    "Biospecimens Id": "sample_id",
+})
+clinical_df = pd.read_csv(
+    args.clinicalFile,
+    sep="\t",
+    usecols=["External Id", "Gender"]
+).rename(columns={
+    "External Id": "external_id",
+    "Gender": "sex",
+})
+manifest_df = pd.read_csv(
+    args.manifestFile,
+    sep="\t",
+    usecols=["Aliquot External ID", "File Name", "Family Id", "Proband"]
+).rename(columns={
+    "Aliquot External ID": "external_id",
+    "File Name": "file_name",
+    "Family Id": "family_id",
+    "Proband": "proband",
+})
 
-#Obtain information from manifest file and add to initial dictionary
-with open(args.manifestFile) as manifest:
-    manifestColumnNames = manifest.readline()
-    manifestColumnNames = manifestColumnNames.rstrip().split("\t")
-    #Information needed from this file are the "File Name", "Family Id", "Aliquot External ID", and "Proband" (Yes, or No).
-    fileNameIndex = manifestColumnNames.index("File Name")
-    familyIdIndex = manifestColumnNames.index("Family Id")
-    manifestExternalIdIndex = manifestColumnNames.index("Aliquot External ID")
-    probandIndex = manifestColumnNames.index("Proband")
-    
-    #Add to the initial dictionary where the key is the "Aliquot External ID" as this is common across all input files.
-    #The value is a list where value[0] the "File Name", value[1] is "Family Id", and value[2] is "Proband"
-    #as "Yes" or "No"
-    for sample in manifest:
-        sample = sample.rstrip().split("\t")
-        outputDict[sample[manifestExternalIdIndex]] = [sample[fileNameIndex], sample[familyIdIndex], sample[probandIndex]]
+# Join the dataframes
+df = manifest_df.merge(biospecimen_df)\
+    .merge(clinical_df)\
+    .drop(columns=["external_id"])
 
-#Obtain information from the biospecimen file and add to initial dictionary
-with open(args.biospecimenFile) as biospecimen:
-    biospecimenColumnNames = biospecimen.readline()
-    biospecimenColumnNames = biospecimenColumnNames.rstrip().split("\t")
-    #Information needed from this file are the "External Aliquot Id", and "Biospecimens Id"
-    biospecimenExternalIdIndex = biospecimenColumnNames.index("External Aliquot Id")
-    sampleIdIndex = biospecimenColumnNames.index("Biospecimens Id")
+# Keep families with all 3 members
+keep = df.groupby(["family_id"]).size() == 3
+df = df[df["family_id"].isin(keep[keep].index)] \
+    .sort_values(["family_id"])
 
-    #Use the patient "External Aliquot Id" as the key to append the "Biospecimens Id" to the value list.
-    for line in biospecimen:
-        line = line.rstrip().split("\t")
-        outputDict[line[biospecimenExternalIdIndex]].append(line[sampleIdIndex])
+# Reorder columns
+df = df[["file_name", "family_id", "sample_id", "proband", "sex"]]
 
-#Obtain gender information from the clinical file and add to initial dictionary
-with open(args.clinicalFile) as clinical:
-    clinicalColumnNames = clinical.readline()
-    clinicalColumnNames = clinicalColumnNames.rstrip().split("\t")
-    #Information needed from this file are the "External Id", and "Gender"
-    clinicalExternalIdIndex = clinicalColumnNames.index("External Id")
-    genderIndex = clinicalColumnNames.index("Gender")
+# Convert sex to numeric values
+def sex_to_number(sex):
+    if sex == "Female":
+        return 2
+    return 1
+df["sex"] = df["sex"].apply(sex_to_number)
 
-    #Use the patient "External Id" as the key to append the "Biospecimens Id" to the value list.
-    for line in clinical:
-        line = line.rstrip().split("\t")
-        outputDict[line[clinicalExternalIdIndex]].append(line[genderIndex])
-
-#Create list of samples where only trios are included
-familyDict = {}
-for key, value in outputDict.items():
-    if value[1] not in familyDict:
-        familyDict[value[1]] = [value]
-    else:
-        familyDict[value[1]].append(value)
-
-trioList = []
-for key, value in familyDict.items():
-    if len(value) == 3:
-        trioList.append(value[0])
-        trioList.append(value[1])
-        trioList.append(value[2])
-
-#Output information to outputFile
-with open(args.outputFile, 'w') as output:
-    output.write("file_name\tfamily_id\tsample_id\tproband\tsex\n")
-    for item in trioList:
-        if item[-1] == "Female":
-            output.write("{}\t{}\t{}\t{}\t2\n".format(item[0], item[1], item[3], item[2], item[4]))
-        else:
-            output.write("{}\t{}\t{}\t{}\t1\n".format(item[0], item[1], item[3], item[2], item[4]))
+# Save output file
+df.to_csv(args.outputFile, sep="\t", index=False)
 
 #output message
 timeElapsedSeconds = round((time.time()-startTime), 2)
