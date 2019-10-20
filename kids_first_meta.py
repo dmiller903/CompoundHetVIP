@@ -2,22 +2,38 @@
 
 #Import necessary packages
 import time
-from sys import argv
+import argparse
 
 #Save time that script started
 startTime = time.time()
 
 #Input/output files
-manifestFile = argv[1]
-biospecimenFile = argv[2]
-clinicalFile = argv[3]
-outputFile = argv[4]
+parser = argparse.ArgumentParser(
+    description="Combine a manifest, biospecimen, and clinical file into an output TSV"
+)
+parser.add_argument(
+    "manifestFile", 
+    help='Path to a manifest TSV file with columns "File Name", "Family Id", "Aliquot External ID", and "Proband"'
+)
+parser.add_argument(
+    "biospecimenFile",
+    help='Path to a biospecimen TSV file with columns "External Aliquot Id" and "Biospecimens Id"'
+)
+parser.add_argument(
+    "clinicalFile",
+    help='Path to a clinical TSV file with columns "External Id" and "Gender"'
+)
+parser.add_argument(
+    "outputFile",
+    help='Path to the output file'
+)
+args = parser.parse_args()
 
 #Dictionary to store needed information in
 outputDict = {}
 
 #Obtain information from manifest file and add to initial dictionary
-with open(manifestFile) as manifest:
+with open(args.manifestFile) as manifest:
     manifestColumnNames = manifest.readline()
     manifestColumnNames = manifestColumnNames.rstrip().split("\t")
     #Information needed from this file are the "File Name", "Family Id", "Aliquot External ID", and "Proband" (Yes, or No).
@@ -34,7 +50,7 @@ with open(manifestFile) as manifest:
         outputDict[sample[manifestExternalIdIndex]] = [sample[fileNameIndex], sample[familyIdIndex], sample[probandIndex]]
 
 #Obtain information from the biospecimen file and add to initial dictionary
-with open(biospecimenFile) as biospecimen:
+with open(args.biospecimenFile) as biospecimen:
     biospecimenColumnNames = biospecimen.readline()
     biospecimenColumnNames = biospecimenColumnNames.rstrip().split("\t")
     #Information needed from this file are the "External Aliquot Id", and "Biospecimens Id"
@@ -47,7 +63,7 @@ with open(biospecimenFile) as biospecimen:
         outputDict[line[biospecimenExternalIdIndex]].append(line[sampleIdIndex])
 
 #Obtain gender information from the clinical file and add to initial dictionary
-with open(clinicalFile) as clinical:
+with open(args.clinicalFile) as clinical:
     clinicalColumnNames = clinical.readline()
     clinicalColumnNames = clinicalColumnNames.rstrip().split("\t")
     #Information needed from this file are the "External Id", and "Gender"
@@ -75,7 +91,7 @@ for key, value in familyDict.items():
         trioList.append(value[2])
 
 #Output information to outputFile
-with open(outputFile, 'w') as output:
+with open(args.outputFile, 'w') as output:
     output.write("file_name\tfamily_id\tsample_id\tproband\tsex\n")
     for item in trioList:
         if item[-1] == "Female":
