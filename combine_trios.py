@@ -2,18 +2,25 @@ import gzip
 import re
 import os
 import time
-from sys import argv
+import argparse
 import concurrent.futures
 
 startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
-#Input file or list of files
-inputFile = argv[1]
+#Input file
+parser = argparse.ArgumentParser(
+    description="Combine trio data into one VCF file"
+)
+parser.add_argument(
+    "inputFile",
+    help='A TSV with columns "file_name" and "family_id" listing the files to be combined'
+)
+args = parser.parse_args()
 
 #Create a dictionary of files that need to be combined into one vcf file
 fileDict = {}
-with open(inputFile) as sampleFile:
+with open(args.inputFile) as sampleFile:
     header = sampleFile.readline()
     headerList = header.rstrip().split("\t")
     fileNameIndex = headerList.index("file_name")
@@ -31,7 +38,7 @@ with open(inputFile) as sampleFile:
 
 probandDict = {}
 parentDict = {}
-with open(inputFile) as sampleFile:
+with open(args.inputFile) as sampleFile:
     header = sampleFile.readline()
     headerList = header.rstrip().split("\t")
     fileNameIndex = headerList.index("file_name")
@@ -69,7 +76,7 @@ def createFamFiles(proband):
             paternal = key
         else:
             maternal = key
-    with open(inputFile) as sampleFile:
+    with open(args.inputFile) as sampleFile:
         header = sampleFile.readline()
         headerList = header.rstrip().split("\t")
         fileNameIndex = headerList.index("file_name")
