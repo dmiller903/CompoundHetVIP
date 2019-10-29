@@ -10,6 +10,9 @@ char = '\n' + ('*' * 70) + '\n'
 
 #Input file or list of files
 inputFile = argv[1]
+pathToFiles = argv[2]
+if pathToFiles.endswith("/"):
+    pathToFiles = pathToFiles[0:-1]
 
 #Create a dictionary of files that need to be combined into one vcf file
 fileDict = {}
@@ -18,12 +21,12 @@ with open(inputFile) as sampleFile:
     headerList = header.rstrip().split("\t")
     fileNameIndex = headerList.index("file_name")
     familyIdIndex = headerList.index("family_id")
+    sampleIdIndex = header.index("sample_id")
     for sample in sampleFile:
         sampleData = sample.rstrip("\n").split("\t")
-        fileName = sampleData[fileNameIndex]
+        sampleId = sampleData[sampleIdIndex]
         sampleFamilyId = sampleData[familyIdIndex]
-        shortName = re.findall(r"([\w\-/]+)\.?.*\.?.*\.gz", fileName)[0]
-        actualFileName = "{}_test/{}_parsed.vcf.gz".format(sampleFamilyId, shortName)
+        actualFileName = "{}/{}/{}/{}_parsed.vcf.gz".format(pathToFiles, sampleFamilyId, sampleId, sampleId)
         if sampleFamilyId not in fileDict:
             fileDict[sampleFamilyId] = [actualFileName]
         else:
@@ -46,8 +49,6 @@ with open(inputFile) as sampleFile:
         sampleId = sampleData[sampleIdIndex]
         probandStatus = sampleData[probandIndex]
         gender = sampleData[genderIndex]
-        shortName = re.findall(r"([\w\-/]+)\.?.*\.?.*\.gz", fileName)[0]
-        actualFileName = "{}_test/{}_parsed.vcf.gz".format(sampleFamilyId, shortName)
         if probandStatus == "Yes":
             probandDict[sampleId] = sampleFamilyId
         else:
@@ -88,11 +89,11 @@ def createFamFiles(proband):
                 sampleDict[sampleId] = "{}\t{}\t{}\t{}\t{}\t2\n".format(sampleFamilyId, sampleId, paternal, maternal, gender)
             elif probandStatus == "No" and familyId == sampleFamilyId:
                 sampleDict[sampleId] = "{}\t{}\t0\t0\t{}\t1\n".format(sampleFamilyId, sampleId, gender)
-    with open("{}_test/{}.fam".format(familyId, familyId), "w") as outputFile:
+    with open("{}/{}/{}_trio.fam".format(pathToFiles, familyId, familyId), "w") as outputFile:
         for key, value in sorted(sampleDict.items()):
             outputFile.write(value)
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
     executor.map(createFamFiles, probandDict)
 
 filesToGenotype = []
@@ -100,13 +101,14 @@ filesToGenotype = []
 def combineTrios(trio):
     files = fileDict[trio]
     fileString = ""
-    outputName = "{}_test/{}.vcf.gz".format(trio, trio)
+    os.system("mkdir {}/{}/{}_trio".format(pathToFiles, trio, trio))
+    outputName = "{}/{}/{}_trio/{}_trio.vcf.gz".format(pathToFiles, trio, trio, trio)
     for file in files:
         fileString += "-V {} ".format(file)
         os.system("gatk IndexFeatureFile -F {}".format(file))
     os.system("gatk CombineGVCFs -R /references/Homo_sapiens_assembly38.fasta {} -O {}".format(fileString, outputName))
     return(outputName)
-with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
     outputName = executor.map(combineTrios, fileDict)
     for file in outputName:
         filesToGenotype.append(file)

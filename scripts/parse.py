@@ -11,6 +11,9 @@ char = '\n' + ('*' * 70) + '\n'
 
 #Combine Manifest and Biospecimen
 inputFile = argv[1]
+pathToFiles = argv[2]
+if pathToFiles.endswith("/"):
+    pathToFiles = pathToFiles[0:-1]
 
 #Create a list of proband files that need to have non-variant sites removed. Create a list of parent files that need sites removed
 probandList = []
@@ -23,23 +26,26 @@ with open(inputFile) as tsvFile:
     fileNameIndex = header.index("file_name")
     familyIdIndex = header.index("family_id")
     probandIndex = header.index("proband")
+    sampleIdIndex = header.index("sample_id")
     for sample in tsvFile:
         sample = sample.rstrip().split("\t")
         if sample[probandIndex] == "Yes":
             probandList.append(sample[fileNameIndex])
-            probandDict[sample[fileNameIndex]] = sample[familyIdIndex]
+            probandDict[sample[fileNameIndex]] = [sample[familyIdIndex], sample[sampleIdIndex]]
         else:
             parentList.append(sample[fileNameIndex])
-            parentDict[sample[fileNameIndex]] = sample[familyIdIndex]
+            parentDict[sample[fileNameIndex]] = [sample[familyIdIndex], sample[sampleIdIndex]]
 #Filter each proband file, remove  variants-only sites, create a dictionary of variant-only sites
 positionDict = {}
 def filterVariantOnly(file):
     fileName = re.findall(r'(.+)\.g\.vcf\.gz', file)[0]
-    familyName = probandDict[file]
-    os.system("mkdir {}_test".format(familyName))
+    familyName = probandDict[file][0]
+    sampleName = probandDict[file][1]
+    os.system("mkdir {}/{}".format(pathToFiles, familyName))
+    os.system("mkdir {}/{}/{}".format(pathToFiles, familyName, sampleName))
     familyDict = {familyName: {}}
-    outputName = "{}_test/{}_parsed.vcf".format(familyName, fileName)
-    with gzip.open(file, 'rt') as gVCF, open(outputName, 'w') as parsed:
+    outputName = "{}/{}/{}/{}_parsed.vcf".format(pathToFiles, familyName, sampleName, sampleName)
+    with gzip.open("{}/{}".format(pathToFiles, file), 'rt') as gVCF, open(outputName, 'w') as parsed:
         for line in gVCF:
             if line.startswith('#'):
                 parsed.write(line)
@@ -58,7 +64,7 @@ def filterVariantOnly(file):
     return(familyDict)
 
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=44) as executor:
     familyDict = executor.map(filterVariantOnly, probandList)
     for dict in familyDict:
         positionDict.update(dict)
@@ -70,9 +76,11 @@ print('Non-variant sites have been removed from probands. Time elapsed: {} minut
 #Filter each parent file for sites that occur in proband of that family
 def filterParents(file):
     fileName = re.findall(r'(.+)\.g\.vcf\.gz', file)[0]
-    familyName = parentDict[file]
-    outputName = "{}_test/{}_parsed.vcf".format(familyName, fileName)
-    with gzip.open(file, 'rt') as gVCF, open(outputName, 'w') as parsed:
+    familyName = parentDict[file][0]
+    sampleName = parentDict[file][1]
+    os.system("mkdir {}/{}/{}".format(pathToFiles, familyName, sampleName))
+    outputName = "{}/{}/{}/{}_parsed.vcf".format(pathToFiles, familyName, sampleName, sampleName)
+    with gzip.open("{}/{}".format(pathToFiles, file), 'rt') as gVCF, open(outputName, 'w') as parsed:
         for line in gVCF:
             if line.startswith("#"):
                 parsed.write(line)
@@ -92,7 +100,7 @@ def filterParents(file):
     #os.system("rm {}".format(file))
 
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=44) as executor:
     executor.map(filterParents, parentList)
 
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)

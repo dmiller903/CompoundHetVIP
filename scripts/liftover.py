@@ -9,6 +9,9 @@ char = '\n' + ('*' * 70) + '\n'
 
 #Input file or list of files
 inputFile = argv[1]
+pathToFiles = argv[2]
+if pathToFiles.endswith("/"):
+    pathToFiles = pathToFiles[0:-1]
 
 #Create a list of file(s) to be liftedover
 fileSet = set()
@@ -27,36 +30,36 @@ elif inputFile.endswith(".tsv"):
         headerList = header.rstrip().split("\t")
         fileNameIndex = headerList.index("file_name")
         familyIdIndex = headerList.index("family_id")
+        sampleIdIndex = header.index("sample_id")
         for sample in sampleFile:
             sampleData = sample.rstrip("\n").split("\t")
-            fileName = sampleData[fileNameIndex]
             sampleFamilyId = sampleData[familyIdIndex]
-            shortName = re.findall(r"([\w\-/]+)\.?.*\.?.*\.gz", fileName)[0]
-            individualFileName = "{}_test/{}_parsed.vcf.gz".format(sampleFamilyId, shortName)
-            trioFileName = "{}_test/{}.vcf.gz".format(sampleFamilyId, sampleFamilyId)
+            sampleId = sampleData[sampleIdIndex]
+            individualFileName = "{}/{}/{}/{}_parsed.vcf.gz".format(pathToFiles, sampleFamilyId, sampleId, sampleId)
+            trioFileName = "{}/{}/{}_trio/{}_trio.vcf.gz".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId)
             fileSet.add(individualFileName)
             fileSet.add(trioFileName)
 
 #Liftover file(s)
 def liftoverFiles(file):
     if "FM_" in file and "parsed" in file:
-        fileFolder, fileName = re.findall("([\w\-]+)/([\w\-]+)_parsed\.?.*\.?.*\.gz", file)[0]
+        fileFolder, fileName = re.findall("([\w\-\/_]+)\/([\w\-_]+)_parsed\.?.*\.?.*\.gz", file)[0]
         os.system("gatk IndexFeatureFile -F {}".format(file))
         os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O /tmp/{}_genotyped.vcf.gz'.format(file, fileName))
         os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I=/tmp/{}_genotyped.vcf.gz O={}/{}_liftover.vcf.gz \
-        CHAIN=/references/hg38ToHg19.over.chain R=/references/ucsc.hg19.fasta REJECT={}/{}_rejected_variants.vcf".format(fileName, fileFolder, fileName, fileFolder, fileName))
+        CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}/{}_rejected_variants.vcf".format(fileName, fileFolder, fileName, fileFolder, fileName))
     elif "FM_" in file and "parsed" not in file:
-        fileFolder, fileName = re.findall("([\w\-]+)/([\w\-]+)\.?.*\.?.*\.gz", file)[0]
+        fileFolder, fileName = re.findall("([\w\-\/_]+)\/([\w\-_]+)\.?.*\.?.*\.gz", file)[0]
         os.system("gatk IndexFeatureFile -F {}".format(file))
         os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O /tmp/{}_genotyped.vcf.gz'.format(file, fileName))
         os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I=/tmp/{}_genotyped.vcf.gz O={}/{}_liftover.vcf.gz \
-        CHAIN=/references/hg38ToHg19.over.chain R=/references/ucsc.hg19.fasta REJECT={}/{}_rejected_variants.vcf".format(fileName, fileFolder, fileName, fileFolder, fileName))
+        CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}/{}_rejected_variants.vcf".format(fileName, fileFolder, fileName, fileFolder, fileName))
     else:
-        fileName = re.findall("([\w\-/]+)\.?.*\.?.*\.gz", file)[0]
+        fileName = re.findall("([\w\-\/_\.]+)\.?.*\.?.*\.gz", file)[0]
         os.system("gatk IndexFeatureFile -F {}".format(file))
         os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O /tmp/{}_genotyped.vcf'.format(file, fileName))
         os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I=/tmp/{}_genotyped.vcf O={}_liftover.vcf.gz \
-        CHAIN=/references/hg38ToHg19.over.chain R=/references/ucsc.hg19.fasta REJECT={}_rejected_variants.vcf".format(fileName, fileName, fileName))
+        CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}_rejected_variants.vcf".format(fileName, fileName, fileName))
 
 
 with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
