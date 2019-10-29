@@ -20,8 +20,14 @@ apt-get update \
   && /root/miniconda2/bin/conda init \
   && conda config --append channels bioconda \
   && conda config --append channels anaconda \
-  # Download Reference Files and Plink
+  && conda config --append channels cyclus \
+  && conda install -c cyclus java-jdk \
+  # Download Reference Files, Genotype Harmonizer, and Plink
   && wget --no-check-certificate https://github.com/dmiller903/ch-pipeline/raw/master/plink2_linux_x86_64_20190928.zip \
   && unzip /plink2_linux_x86_64_20190928.zip \
-  && wget --no-check-certificate http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20190617.zip \
-  && unzip /plink_linux_x86_64_20190617.zip
+  && wget --no-check-certificate http://www.molgenis.org/downloads/GenotypeHarmonizer/GenotypeHarmonizer-1.4.20-dist.tar.gz \
+  && tar -xzf /GenotypeHarmonizer-1.4.20-dist.tar.gz \
+  && wget --no-check-certificate https://files.osf.io/v1/resources/3znuj/providers/osfstorage/5db8af02f3bb87000b85b76e/?zip= -O /references.zip \
+  && unzip /references.zip
+ENV \
+  PATH=${PATH}:/root/miniconda2/bin/
