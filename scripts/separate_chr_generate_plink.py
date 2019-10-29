@@ -10,6 +10,9 @@ char = '\n' + ('*' * 70) + '\n'
 
 #Input file or list of files
 inputFile = argv[1]
+pathToFiles = argv[2]
+if pathToFiles.endswith("/"):
+    pathToFiles = pathToFiles[0:-1]
 
 #Create a list of file(s) that need to have unplaced and multiallelic sites removed
 fileSet = set()
@@ -28,13 +31,14 @@ elif inputFile.endswith(".tsv"):
         headerList = header.rstrip().split("\t")
         fileNameIndex = headerList.index("file_name")
         familyIdIndex = headerList.index("family_id")
+        sampleIdIndex = headerList.index("sample_id")
         for sample in sampleFile:
             sampleData = sample.rstrip("\n").split("\t")
             fileName = sampleData[fileNameIndex]
             sampleFamilyId = sampleData[familyIdIndex]
-            shortName = re.findall(r"([\w\-/]+)\.?.*\.?.*\.gz", fileName)[0]
-            individualFileName = "{}_test/{}_liftover_parsed.vcf.gz".format(sampleFamilyId, shortName)
-            trioFileName = "{}_test/{}_liftover_parsed.vcf.gz".format(sampleFamilyId, sampleFamilyId)
+            sampleId = sampleData[sampleIdIndex]
+            individualFileName = "{}/{}/{}/{}_liftover_parsed.vcf.gz".format(pathToFiles, sampleFamilyId, sampleId, sampleId)
+            trioFileName = "{}/{}/{}_trio/{}_trio_liftover_parsed.vcf.gz".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId)
             fileSet.add(individualFileName)
             fileSet.add(trioFileName)
 
@@ -42,40 +46,58 @@ plinkFileSet = set()
 #Separate combinedTrio by chromosome
 def separateByChr(file):
     with gzip.open(file, "rt") as vcf:
-        fileFolder, fileName = re.findall("([\w\-]+)/([\w\-]+)_liftover_parsed\.?.*\.?.*\.gz", file)[0]
-        outputName = "{}/{}_".format(fileFolder, fileName)
+        fileName = re.findall(r"([\w\-/_]+)_liftover_parsed\.?.*\.?.*\.gz", file)[0]
+        outputName = "{}_".format(fileName)
         header = ""
         tmpFileSet = set()
+        chromosomeSet = set()
+        chromosomeNumber = ""
         for line in vcf:
             if line.startswith("#"):
                 header = header + line
-            else:
+            elif not line.startswith("#") and line.split("\t")[0] not in chromosomeSet:
                 chromosomeNumber = line.split("\t")[0]
-                if not os.path.exists("{}{}.vcf".format(outputName, chromosomeNumber)):
-                    with open("{}{}.vcf".format(outputName, chromosomeNumber), "w") as chromosome:
-                        chromosome.write(header)
-                        chromosome.write(line)
-                        if "FM_" in fileName and "{}{}.vcf".format(outputName, chromosomeNumber) not in plinkFileSet:
-                            tmpFileSet.add("{}{}.vcf".format(outputName, chromosomeNumber))
-                else:
-                    with open("{}{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
-                        chromosome.write(line)
+                with open("{}{}.vcf".format(outputName, chromosomeNumber), "w") as chromosome:
+                    chromosome.write(header)
+                    chromosome.write(line)
+                    tmpFileSet.add("{}{}.vcf".format(outputName, chromosomeNumber))
+                    chromosomeSet.add(chromosomeNumber)
+            else:
+                with open("{}{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
+                    chromosome.write(line)
         return(tmpFileSet)
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
     tmpFileList = executor.map(separateByChr, fileSet)
     for tmpList in tmpFileList:
         for tmpSet in tmpList:
             plinkFileSet.add(tmpSet)
 
-print(plinkFileSet)
-#Create bed, bim files for each chromosome
-def createPlink(file):
-    fileFolder, fileName, chrNumber = re.findall("([\w\-]+)\/([\w\-]+)_(chr[\w]+)\.?.*\.?.*\.vcf", file)[0]
-    outputName = "{}/{}_{}".format(fileFolder, fileName, chrNumber)
-    os.system("/plink2 --vcf {} --fam {}/{}.fam --make-bed --out {}".format(file, fileFolder, fileName, outputName))
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
+#Create harmonized bed, bim files for each chromosome
+def createPlink(file):
+    filePath, famFolder, sampleFolder, sampleFile, chrNumber = re.findall(r"([\w\-/_]+)\/([\w\-]+)\/([\w\-]+)\/([\w\-]+)_(chr[\w]+)\.?.*\.?.*\.vcf", file)[0]
+    outputName = "{}/{}/{}/{}_{}".format(filePath, famFolder, sampleFolder, sampleFile, chrNumber)
+    os.system("/plink2 --vcf {} --fam {}/{}/{}_trio.fam --make-bed --out {}".format(file, filePath, famFolder, famFolder, outputName))
+    if chrNumber[-1].isnumeric():
+        os.system("java -jar /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+        --update-id \
+        -ura \
+        --outputType PLINK_BED --outpout {}_harmonized \
+        --refType VCF --ref /ALL.{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes".format(outputName, outputName, chrNumber))
+    elif chrNumber[-1] == "X":
+        os.system("java -jar /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+        --update-id \
+        -ura \
+        --outputType PLINK_BED --outpout {}_harmonized \
+        --refType VCF --ref /ALL.chrX.phase3_shapeit2_mvncall_integrated_v1b.20130502.genotypes".format(outputName, outputName, chrNumber))
+    else:
+        os.system("java -jar /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+        --update-id \
+        -ura \
+        --outputType PLINK_BED --outpout {}_harmonized \
+        --refType VCF --ref /ALL.chrY.phase3_integrated_v2a.20130502.genotypes".format(outputName, outputName, chrNumber))
+with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
     executor.map(createPlink, plinkFileSet)
 
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
