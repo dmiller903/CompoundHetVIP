@@ -10,7 +10,10 @@ char = '\n' + ('*' * 70) + '\n'
 
 #Input file or list of files
 inputFile = argv[1]
-
+pathToFiles = argv[2]
+if pathToFiles.endswith("/"):
+    pathToFiles = pathToFiles[0:-1]
+    
 #Create a list of file(s) that need to have unplaced and multiallelic sites removed
 fileSet = set()
 if inputFile.endswith(".gz"):
@@ -28,13 +31,14 @@ elif inputFile.endswith(".tsv"):
         headerList = header.rstrip().split("\t")
         fileNameIndex = headerList.index("file_name")
         familyIdIndex = headerList.index("family_id")
+        sampleIdIndex = headerList.index("sample_id")
         for sample in sampleFile:
             sampleData = sample.rstrip("\n").split("\t")
             fileName = sampleData[fileNameIndex]
             sampleFamilyId = sampleData[familyIdIndex]
-            shortName = re.findall(r"([\w\-/]+)\.?.*\.?.*\.gz", fileName)[0]
-            individualFileName = "{}_test/{}_liftover.vcf.gz".format(sampleFamilyId, shortName)
-            trioFileName = "{}_test/{}_liftover.vcf.gz".format(sampleFamilyId, sampleFamilyId)
+            sampleId = sampleData[sampleIdIndex]
+            individualFileName = "{}/{}/{}/{}_liftover.vcf.gz".format(pathToFiles, sampleFamilyId, sampleId, sampleId)
+            trioFileName = "{}/{}/{}_trio/{}_trio_liftover.vcf.gz".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId)
             fileSet.add(individualFileName)
             fileSet.add(trioFileName)
 
@@ -45,7 +49,7 @@ chrToKeep = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "ch
 filesToRemoveDuplicates = []
 
 def removeSites(file):
-    fileName = re.findall(r"([\w\-/]+)_liftover\.?.*\.?.*\.gz", file)[0]
+    fileName = re.findall(r"([\w\-/_]+)_liftover\.?.*\.?.*\.gz", file)[0]
     outputName = "{}_no_ambiguous_sites.vcf".format(fileName)
     with gzip.open(file, "rt") as inputFile, open(outputName, "wt") as outFile:
         for line in inputFile:
@@ -63,7 +67,7 @@ def removeSites(file):
     os.system("bgzip {}".format(outputName))
     return("{}.gz".format(outputName))
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
     fileName = executor.map(removeSites, fileSet)
     for file in fileName:
         filesToRemoveDuplicates.append(file)
@@ -75,30 +79,34 @@ print('{}Unplaced and multiallelic sites have been removed. Time elapsed: {} min
 
 #Remove all duplicate sites
 def removeDuplicates(file):
-    fileName = re.findall(r"([\w\-/]+)_no_ambiguous_sites\.?.*\.?.*\.gz", file)[0]
+    fileName = re.findall(r"([\w\-/_]+)_no_ambiguous_sites\.?.*\.?.*\.gz", file)[0]
     outputName = "{}_liftover_parsed.vcf".format(fileName)
     duplicateFile = "{}_removedDuplicates.vcf".format(fileName)
 
-    lines = [["NA"], ["NA"], ["NA"], ["NA"], ["NA"], ["NA"], ["NA"], ["NA"], ["NA"], ["NA"]]
-
-    dupList = []
+    posDict = {}
+    dupDict = {}
     with gzip.open(file, "rt") as inputFile:
         for line in inputFile:
             if not line.startswith("#"):
                 line = line.split("\t")
-                line = line[0:2] + line[3:5]
-                if line not in lines:
-                    lines.append(line)
-                    lines = lines[-10:]
+                chromosome = line[0]
+                pos = line[1]
+                if chromosome not in posDict:
+                    posDict[chromosome] = set(pos)
+                    dupDict[chromosome] = set()
                 else:
-                    dupList.append(line)
+                    if pos not in posDict[chromosome]:
+                        posDict[chromosome].add(pos)
+                    else:
+                        dupDict[chromosome].add(pos)
 
     with gzip.open(file, "rt") as inputFile, open(outputName, "wt") as outFile, open(duplicateFile, "w") as duplicates:
         for line in inputFile:
             if not line.startswith("#"):
                 splitLine = line.split("\t")
-                splitLine = splitLine[0:2] + splitLine[3:5]
-                if splitLine not in dupList:
+                chromosome = splitLine[0]
+                pos = splitLine[1]
+                if pos not in dupDict[chromosome]:
                     outFile.write(line)
                 else:
                     duplicates.write(line)
@@ -106,7 +114,7 @@ def removeDuplicates(file):
                 outFile.write(line)
                 duplicates.write(line)
     os.system("bgzip {}".format(outputName))
-with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
     executor.map(removeDuplicates, filesToRemoveDuplicates)
 
 

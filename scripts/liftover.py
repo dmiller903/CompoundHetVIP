@@ -30,7 +30,7 @@ elif inputFile.endswith(".tsv"):
         headerList = header.rstrip().split("\t")
         fileNameIndex = headerList.index("file_name")
         familyIdIndex = headerList.index("family_id")
-        sampleIdIndex = header.index("sample_id")
+        sampleIdIndex = headerList.index("sample_id")
         for sample in sampleFile:
             sampleData = sample.rstrip("\n").split("\t")
             sampleFamilyId = sampleData[familyIdIndex]
