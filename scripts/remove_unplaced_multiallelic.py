@@ -64,7 +64,7 @@ def removeSites(file):
                 splitLine = line.split("\t")
                 if splitLine[0] in chrToKeep and "," not in splitLine[4]:
                     outFile.write(line)
-    os.system("bgzip {}".format(outputName))
+    os.system("bgzip -f {}".format(outputName))
     return("{}.gz".format(outputName))
 
 with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
@@ -83,8 +83,8 @@ def removeDuplicates(file):
     outputName = "{}_liftover_parsed.vcf".format(fileName)
     duplicateFile = "{}_removedDuplicates.vcf".format(fileName)
 
-    posDict = {}
-    dupDict = {}
+    posDict = dict()
+    dupDict = dict()
     with gzip.open(file, "rt") as inputFile:
         for line in inputFile:
             if not line.startswith("#"):
@@ -92,13 +92,13 @@ def removeDuplicates(file):
                 chromosome = line[0]
                 pos = line[1]
                 if chromosome not in posDict:
-                    posDict[chromosome] = set(pos)
+                    posDict[chromosome] = set()
+                    posDict[chromosome].add(pos)
                     dupDict[chromosome] = set()
-                else:
-                    if pos not in posDict[chromosome]:
-                        posDict[chromosome].add(pos)
-                    else:
-                        dupDict[chromosome].add(pos)
+                elif chromosome in posDict and pos not in posDict[chromosome]:
+                    posDict[chromosome].add(pos)
+                elif chromosome in posDict and pos in posDict[chromosome]:
+                    dupDict[chromosome].add(pos)
 
     with gzip.open(file, "rt") as inputFile, open(outputName, "wt") as outFile, open(duplicateFile, "w") as duplicates:
         for line in inputFile:
@@ -113,7 +113,8 @@ def removeDuplicates(file):
             else:
                 outFile.write(line)
                 duplicates.write(line)
-    os.system("bgzip {}".format(outputName))
+
+    os.system("bgzip -f {}".format(outputName))
 with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
     executor.map(removeDuplicates, filesToRemoveDuplicates)
 
