@@ -38,11 +38,8 @@ apt-get update \
   && tar zxvf /references/1000GP_Phase3.tgz \
   && cd / \
   # Install shapeit
-  #&& wget --no-check-certificate https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r904.glibcv2.17.linux.tar.gz \
-  #&& tar -zxvf shapeit.v2.r904.glibcv2.17.linux.tar.gz \
-  && wget --no-check-certificate https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r904.glibcv2.12.linux.tar.gz \
-  && tar -zxvf shapeit.v2.r904.glibcv2.12.linux.tar.gz \
-  # Install HapCUT2
+  && wget --no-check-certificate https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r904.glibcv2.17.linux.tar.gz \
+  && tar -zxvf shapeit.v2.r904.glibcv2.17.linux.tar.gz \
   # Install HapCUT2
   && git clone https://github.com/dmiller903/HapCUT2.git \
   && cd /HapCUT2 \
