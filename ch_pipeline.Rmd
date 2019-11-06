@@ -17,7 +17,7 @@ docker pull python:3.8-rc-slim-buster
 
 ### Combine manifest, biospecimen, and clincal files
 ```{bash, eval = F}
-docker run -v /Data/KidsFirst/idiopathic_scoliosis/gVCF:/proj -w /proj -t python:3.8-rc-slim-buster python3 kids_first_meta.py kidsfirst-participant-family-manifest_2019-09-23.tsv participants_biospecimen_20190923.tsv participant_clinical_20190923.tsv /proj/tmp/combined.tsv
+docker run -v /Data/KidsFirst:/proj -w /proj -t python:3.8-rc-slim-buster python3 ch-pipeline/scripts/kids_first_meta.py idiopathic_scoliosis/gVCF/kidsfirst-participant-family-manifest_2019-09-23.tsv idiopathic_scoliosis/gVCF/participants_biospecimen_20190923.tsv idiopathic_scoliosis/gVCF/participant_clinical_20190923.tsv idiopathic_scoliosis/gVCF/consolidated.tsv
 ```
 
 ### Build Docker image
@@ -27,10 +27,35 @@ docker build -t parse-pipeline .
 
 ### Parse files to include variant only sites in probands and corresponding sites in parents for each trio
 ```{bash}
-docker run -d -v /Data/KidsFirst/idiopathic_scoliosis/gVCF:/proj -w /proj -t parse-pipeline python3 parse.py /proj/ /proj/tmp/sample_data.tsv > parse.out
+docker run -d -v /Data/KidsFirst:/proj -w /proj -t parse-pipeline python3 ch-pipeline/scripts/parse.py idiopathic_scoliosis/gVCF/consolidated.tsv idiopathic_scoliosis/gVCF > idiopathic_scoliosis/gVCF/parse.out
 ```
 
+### Combine each trio into a single file
+```{bash}
+docker run -d -v /Data/KidsFirst:/proj -w /proj -t combine-trios python3 ch-pipeline/scripts/combine_trios.py idiopathic_scoliosis/gVCF/consolidated.tsv idiopathic_scoliosis/gVCF > idiopathic_scoliosis/gVCF/combine_trios.out
+```
 
+### Liftover trio files and individual files from GRCh38 to GRCh37
+```{bash}
+docker run -d -v /Data/KidsFirst:/proj -w /proj -t liftover-pipeline python3 ch-pipeline/scripts/liftover.py idiopathic_scoliosis/gVCF/consolidated.tsv idiopathic_scoliosis/gVCF > idiopathic_scoliosis/gVCF/liftover.out
+```
+
+### Remove multiallelic sites and duplicate sites from lifted files
+```{bash}
+docker run -d -v /Data/KidsFirst:/proj -w /proj -t parse-pipeline python3 ch-pipeline/scripts/remove_unplaced_multiallelic.py idiopathic_scoliosis/gVCF/consolidated.tsv idiopathic_scoliosis/gVCF > idiopathic_scoliosis/gVCF/remove_unplaced_multiallelic.out
+```
+
+### Separate each trio and individal file into chromosome files, then generate plink files for trio's only
+```{bash}
+docker run -d -v /Data/KidsFirst:/proj -w /proj -t sep-chr-plink python3 ch-pipeline/scripts/separate_chr_generate_plink.py idiopathic_scoliosis/gVCF/consolidated.tsv idiopathic_scoliosis/gVCF > idiopathic_scoliosis/gVCF/separate_chr_generate_plink.out
+```
+
+### Phase each of the trios with a haplotype reference panel
+```{bash}
+docker run -d -v /Data/KidsFirst:/proj -w /proj -t phase-pipeline python3 ch-pipeline/scripts/phase_with_shapeit_individual_trio.py idiopathic_scoliosis/gVCF/consolidated.tsv idiopathic_scoliosis/gVCF > idiopathic_scoliosis/gVCF/phase_with_shapeit_individual_trio.out
+```
+
+### Old
 ```{bash}
 # Keep only the variant sites of the gVCF
 docker run -d -v /Data/KidsFirst/ewing_sarcoma/gVCF:/proj -w /proj -t dmill903/\
