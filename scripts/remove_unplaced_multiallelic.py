@@ -42,7 +42,7 @@ elif inputFile.endswith(".tsv"):
             fileSet.add(individualFileName)
             fileSet.add(trioFileName)
 
-#Remove Unplaced sites and multiallelic sites
+#Remove Unplaced sites, multiallelic sites, and sites where the genotype ./. occurs more than once
 chrToKeep = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13",\
  "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"}
 
@@ -62,8 +62,11 @@ def removeSites(file):
                     outFile.write(line)
             else:
                 splitLine = line.split("\t")
-                if splitLine[0] in chrToKeep and "," not in splitLine[4]:
+                if splitLine[0] in chrToKeep and "," not in splitLine[4] and "./." not in line:
                     outFile.write(line)
+                elif splitLine[0] in chrToKeep and "," not in splitLine[4] and "0/1" in line and ("0/0" in line or "1/1" in line) and "./." in line:
+                    outFile.write(line)
+
     os.system("bgzip -f {}".format(outputName))
     return("{}.gz".format(outputName))
 
@@ -75,7 +78,7 @@ with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
 #Output message and time complete
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print('{}Unplaced and multiallelic sites have been removed. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
+print('{}Unplaced sites, multiallelic sites, and sites where ./. occurs more than once have been removed. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
 
 #Remove all duplicate sites
 def removeDuplicates(file):
