@@ -12,7 +12,7 @@ char = '\n' + ('*' * 70) + '\n'
 #Combine Manifest and Biospecimen
 inputFile = argv[1]
 pathToFiles = argv[2]
-numCores = argv[3]
+numCores = int(argv[3])
 if pathToFiles.endswith("/"):
     pathToFiles = pathToFiles[0:-1]
 
