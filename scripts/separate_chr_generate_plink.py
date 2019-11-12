@@ -53,6 +53,7 @@ def separateByChr(file):
         tmpFileSet = set()
         chromosomeSet = set()
         chromosomeNumber = ""
+        
         for line in vcf:
             if line.startswith("#"):
                 header = header + line
@@ -70,6 +71,7 @@ def separateByChr(file):
             else:
                 with open("{}{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
                     chromosome.write(line)
+        
         return(tmpFileSet)
 
 with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
@@ -79,6 +81,39 @@ with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
             plinkFileSet.add(tmpSet)
 
 plinkFileList = list(plinkFileSet)
+plinkFileList.sort()
+
+#Create harmonized bed, bim files for each chromosome
+
+def createPlink(file):
+    filePath, famFolder, sampleFolder, sampleFile, chrNumber = re.findall(r"([\w\-/_]+)\/([\w\-]+)\/([\w\-]+)\/([\w\-]+)_(chr[\w]+)\.?.*\.?.*\.vcf", file)[0]
+    outputName = "{}/{}/{}/{}_{}".format(filePath, famFolder, sampleFolder, sampleFile, chrNumber)
+
+    os.system("/plink2 --vcf {} --fam {}/{}/{}_trio.fam --make-bed --out {}".format(file, filePath, famFolder, famFolder, outputName))
+    
+    if chrNumber[-1].isnumeric():
+        os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+        --update-id \
+        -ura \
+        --outputType PLINK_BED --output {}_harmonized \
+        --refType VCF --ref /ALL.{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes".format(outputName, outputName, chrNumber))
+    elif chrNumber[-1] == "X":
+        os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+        --update-id \
+        -ura \
+        --outputType PLINK_BED --output {}_harmonized \
+        --refType VCF --ref /ALL.chrX.phase3_shapeit2_mvncall_integrated_v1b.20130502.genotypes".format(outputName, outputName, chrNumber))
+    else:
+        os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+        --update-id \
+        -ura \
+        --outputType PLINK_BED --output {}_harmonized \
+        --refType VCF --ref /ALL.chrY.phase3_integrated_v2a.20130502.genotypes".format(outputName, outputName, chrNumber))
+with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
+    executor.map(createPlink, plinkFileList)
+
+
+"""
 #Create harmonized bed, bim files for each chromosome
 while len(plinkFileList) != 0:
     if len(plinkFileList) >= numCores:
@@ -89,26 +124,26 @@ while len(plinkFileList) != 0:
             outputName = "{}/{}/{}/{}_{}".format(filePath, famFolder, sampleFolder, sampleFile, chrNumber)
         
             os.system("/plink2 --vcf {} --fam {}/{}/{}_trio.fam --make-bed --out {}".format(file, filePath, famFolder, famFolder, outputName))
-            """
+            
             if chrNumber[-1].isnumeric():
-                os.system("java -jar -Xmx40g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+                os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
                 --update-id \
                 -ura \
                 --outputType PLINK_BED --output {}_harmonized \
                 --refType VCF --ref /ALL.{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes".format(outputName, outputName, chrNumber))
             elif chrNumber[-1] == "X":
-                os.system("java -jar -Xmx40g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+                os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
                 --update-id \
                 -ura \
                 --outputType PLINK_BED --output {}_harmonized \
                 --refType VCF --ref /ALL.chrX.phase3_shapeit2_mvncall_integrated_v1b.20130502.genotypes".format(outputName, outputName, chrNumber))
             else:
-                os.system("java -jar -Xmx40g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+                os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
                 --update-id \
                 -ura \
                 --outputType PLINK_BED --output {}_harmonized \
                 --refType VCF --ref /ALL.chrY.phase3_integrated_v2a.20130502.genotypes".format(outputName, outputName, chrNumber))
-            """
+            
         with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
             executor.map(createPlink, tempList)
         del plinkFileList[0:numCores]
@@ -119,30 +154,30 @@ while len(plinkFileList) != 0:
             outputName = "{}/{}/{}/{}_{}".format(filePath, famFolder, sampleFolder, sampleFile, chrNumber)
 
             os.system("/plink2 --vcf {} --fam {}/{}/{}_trio.fam --make-bed --out {}".format(file, filePath, famFolder, famFolder, outputName))
-            """
+            
             if chrNumber[-1].isnumeric():
-                os.system("java -jar -Xmx40g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+                os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
                 --update-id \
                 -ura \
                 --outputType PLINK_BED --output {}_harmonized \
                 --refType VCF --ref /ALL.{}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes".format(outputName, outputName, chrNumber))
             elif chrNumber[-1] == "X":
-                os.system("java -jar -Xmx40g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+                os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
                 --update-id \
                 -ura \
                 --outputType PLINK_BED --output {}_harmonized \
                 --refType VCF --ref /ALL.chrX.phase3_shapeit2_mvncall_integrated_v1b.20130502.genotypes".format(outputName, outputName, chrNumber))
             else:
-                os.system("java -jar -Xmx40g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
+                os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
                 --update-id \
                 -ura \
                 --outputType PLINK_BED --output {}_harmonized \
                 --refType VCF --ref /ALL.chrY.phase3_integrated_v2a.20130502.genotypes".format(outputName, outputName, chrNumber))
-            """
+            
         with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
             executor.map(createPlink, plinkFileList)
         del plinkFileList[0:]
-
+"""
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
 print('{}Trios have been separated by chromosome. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
