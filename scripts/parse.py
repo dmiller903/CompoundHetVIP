@@ -59,7 +59,7 @@ def filterVariantOnly(file):
                     familyDict[familyName][chrom] = {pos}
                 else:
                     familyDict[familyName][chrom].add(pos)
-    os.system("bgzip {}".format(outputName))
+    os.system("/root/miniconda2/bin/bgzip {}".format(outputName))
     #os.system("gatk IndexFeatureFile -F {}.gz".format(outputName))
     #os.system("rm {}".format(file))
     return(familyDict)
@@ -96,7 +96,7 @@ def filterParents(file):
                         for i in range(int(pos), int(lineList[7].lstrip("END=")) + 1):
                             if str(i) in positionDict[familyName][chrom]:
                                 parsed.write(line)
-    os.system("bgzip {}".format(outputName))
+    os.system("/root/miniconda2/bin/bgzip {}".format(outputName))
     #os.system("gatk IndexFeatureFile -F {}.gz".format(outputName))
     #os.system("rm {}".format(file))
 
