@@ -28,14 +28,16 @@ apt-get update \
   && conda config --append channels conda-forge \
   && conda config --append channels anaconda \
   # Install other dependencies through conda
-  && conda install -c conda-forge xz \
-  && conda install -c bioconda grabix \
-  && conda install -c bioconda tabix \
-  # Install snpEff
-  && conda install -c bioconda snpeff=4.3.1t \
-  # Download Reference Files
-  && wget --no-check-certificate https://phoenixnap.dl.sourceforge.net/project/snpeff/databases/v4_3/snpEff_v4_3_GRCh37.75.zip -P /tmp \
-  && unzip /tmp/snpEff_v4_3_GRCh37.75.zip -d /root/miniconda2/share/snpeff-4.3.1t-2/ \
+  && conda install -c conda-forge xz=5.2.4 \
+  && conda install -c bioconda grabix=0.1.8 \
+  && conda install -c bioconda tabix=0.2.6 \
+  && conda install -c bioconda java-jdk=8.0.112 \
+  # Install snpEff and Reference Files
+  && wget --no-check-certificate https://sourceforge.net/projects/snpeff/files/snpEff_v4_3t_core.zip \
+  && unzip /snpEff_v4_3t_core.zip \
+  && java -jar /snpEff/snpEff.jar download -v GRCh37.75 \
+  && wget --no-check-certificate https://doc-08-cc-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/0ng6pgff7h5sdictk2hvvr0n84d18ogc/1573164000000/08741013876167739028/*/0B7Ms5xMSFMYlOTV5RllpRjNHU2s?e=download -O /snpEff/./data/dbNSFP2.9.txt.gz.tbi \
+  && wget --no-check-certificate https://doc-0s-cc-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/ppsbqsfaf5fkfo9e7dvpkg2qno2iengt/1573164000000/08741013876167739028/*/0B7Ms5xMSFMYlSTY5dDJjcHVRZ3M?e=download -O /snpEff/./data/dbNSFP2.9.txt.gz \
   # Install gemini
   && wget --no-check-certificate https://raw.github.com/arq5x/gemini/master/gemini/scripts/gemini_install.py \
   && python gemini_install.py /usr/local /usr/local/share/gemini \
