@@ -47,16 +47,35 @@ for trio in fileDict:
     trioChr = fileDict[trio]
     def runShapeit(file):
         chromosome = re.findall(r"[\w\-\/_]+(chr[0-9][0-9]?)", file)[0]
-        os.system("/shapeit.v2.904.2.6.32-696.18.7.el6.x86_64/bin/shapeit -check -B {} --output-log {} -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+        # Check with reference
+        os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -check -B {} --output-log {}_check -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
         --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
         /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3".format(file, file, chromosome, chromosome, chromosome))
-        os.system("/shapeit.v2.904.2.6.32-696.18.7.el6.x86_64/bin/shapeit -B {} --output-log {} -O {}_phased -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+
+        os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} --output-log {}_phased.log -O {}_phased -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
         --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
-        /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --exclude-snp {}.snp.strand.exclude --force --no-mcmc".format(file, file, file, chromosome, chromosome, chromosome, file))
+        /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --exclude-snp {}_check.snp.strand.exclude --no-mcmc --force".format(file, file, file, chromosome, chromosome, chromosome, file))
+
+        os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -convert --input-haps {}_phased --output-log {}_phased_vcf.log --output-vcf {}_phased.vcf".format(file, file, file))
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=23) as executor:
+        executor.map(runShapeit, trioChr)
+"""
+for trio in fileDict:
+    trioChr = fileDict[trio]
+    def runShapeit(file):
+        chromosome = re.findall(r"[\w\-\/_]+(chr[0-9][0-9]?)", file)[0]
+        os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -check -B {} --output-log {}_check_harmonized -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+        --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
+        /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3".format(file, file, chromosome, chromosome, chromosome))
+        #os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} --output-log {}_phased.log -O {}_phased -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+        #--input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
+        #/references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --force --no-mcmc".format(file, file, file, chromosome, chromosome, chromosome, file))
         #os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} -M /references/ALL_1000G_phase1integrated_v3_impute_macGT1/genetic_map_{}_combined_b37.txt \
                 #--input-ref /references/ALL_1000G_phase1integrated_v3_impute_macGT1/ALL_1000G_phase1integrated_v3.sample /references/ALL_1000G_phase1integrated_v3_impute_macGT1/ALL_1000G_phase1integrated_v3_{}_impute_macGT1.hap.gz \
                 #/references/ALL_1000G_phase1integrated_v3_impute_macGT1/ALL_1000G_phase1integrated_v3_{}_impute_macGT1.legend.gz -O {}_phased --output-graph {}_phased.graph \
                 #--output-log {}_phased.log --exclude-snp /fslhome/dmill903/research/idiopathic_scoliosis/gVCF/FM_YTPYPGH1_test/FM_YTPYPGH1_chr21.checks.snp.strand.exclude".format(file, chr, chr, chr, file, file, file))
-        os.system("/shapeit.v2.904.2.6.32-696.18.7.el6.x86_64/bin/shapeit -convert --input-haps {}_phased --output-vcf {}_phased.vcf".format(file, file))
+        #os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -convert --input-haps {}_phased --output-log {}_phased_vcf.log --output-vcf {}_phased.vcf".format(file, file, file))
     with concurrent.futures.ProcessPoolExecutor(max_workers=23) as executor:
         executor.map(runShapeit, trioChr)
+"""
