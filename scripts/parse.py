@@ -12,6 +12,7 @@ char = '\n' + ('*' * 70) + '\n'
 #Combine Manifest and Biospecimen
 inputFile = argv[1]
 pathToFiles = argv[2]
+numCores = argv[3]
 if pathToFiles.endswith("/"):
     pathToFiles = pathToFiles[0:-1]
 
@@ -64,7 +65,7 @@ def filterVariantOnly(file):
     return(familyDict)
 
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=44) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
     familyDict = executor.map(filterVariantOnly, probandList)
     for dict in familyDict:
         positionDict.update(dict)
@@ -100,7 +101,7 @@ def filterParents(file):
     #os.system("rm {}".format(file))
 
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=44) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
     executor.map(filterParents, parentList)
 
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
