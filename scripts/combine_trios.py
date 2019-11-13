@@ -11,6 +11,7 @@ char = '\n' + ('*' * 70) + '\n'
 #Input file or list of files
 inputFile = argv[1]
 pathToFiles = argv[2]
+numCores = int(argv[3])
 if pathToFiles.endswith("/"):
     pathToFiles = pathToFiles[0:-1]
 
@@ -94,7 +95,7 @@ def createFamFiles(proband):
         for key, value in sorted(sampleDict.items()):
             outputFile.write(value)
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
     executor.map(createFamFiles, probandDict)
 
 filesToGenotype = []
@@ -109,7 +110,7 @@ def combineTrios(trio):
         os.system("gatk IndexFeatureFile -F {}".format(file))
     os.system("gatk CombineGVCFs -R /references/Homo_sapiens_assembly38.fasta {} -O {}".format(fileString, outputName))
     return(outputName)
-with concurrent.futures.ProcessPoolExecutor(max_workers=46) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
     outputName = executor.map(combineTrios, fileDict)
     for file in outputName:
         filesToGenotype.append(file)
