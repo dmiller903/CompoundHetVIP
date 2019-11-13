@@ -107,8 +107,8 @@ def combineTrios(trio):
     outputName = "{}/{}/{}_trio/{}_trio.vcf.gz".format(pathToFiles, trio, trio, trio)
     for file in files:
         fileString += "-V {} ".format(file)
-        os.system("gatk IndexFeatureFile -F {}".format(file))
-    os.system("gatk CombineGVCFs -R /references/Homo_sapiens_assembly38.fasta {} -O {}".format(fileString, outputName))
+        os.system("/root/miniconda2/bin/gatk IndexFeatureFile -F {}".format(file))
+    os.system("/root/miniconda2/bin/gatk CombineGVCFs -R /references/Homo_sapiens_assembly38.fasta {} -O {}".format(fileString, outputName))
     return(outputName)
 with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
     outputName = executor.map(combineTrios, fileDict)
