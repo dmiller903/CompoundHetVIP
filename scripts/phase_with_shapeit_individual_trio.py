@@ -51,11 +51,15 @@ for trio in fileDict:
         os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -check -B {} --output-log {}_check -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
         --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
         /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3".format(file, file, chromosome, chromosome, chromosome))
-
-        os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} --output-log {}_phased.log -O {}_phased -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
-        --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
-        /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --exclude-snp {}_check.snp.strand.exclude --no-mcmc --force".format(file, file, file, chromosome, chromosome, chromosome, file))
-
+        if os.path.exists("{}_check.snp.strand.exclude".format(file)):
+            os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} --output-log {}_phased.log -O {}_phased -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+            --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
+            /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --exclude-snp {}_check.snp.strand.exclude --force --seed 123456789".format(file, file, file, chromosome, chromosome, chromosome, file))
+        else:
+            os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} --output-log {}_phased.log -O {}_phased -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+            --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
+            /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --force --seed 123456789".format(file, file, file, chromosome, chromosome, chromosome))
+            
         os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -convert --input-haps {}_phased --output-log {}_phased_vcf.log --output-vcf {}_phased.vcf".format(file, file, file))
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=23) as executor:
