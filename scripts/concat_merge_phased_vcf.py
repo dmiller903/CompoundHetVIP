@@ -4,6 +4,7 @@ import os
 import concurrent.futures
 import subprocess
 from sys import argv
+import gzip
 
 #Input file or list of files
 inputFile = argv[1]
@@ -39,25 +40,26 @@ elif inputFile.endswith(".tsv"):
             sampleId = sampleData[sampleIdIndex]
             if sampleFamilyId not in fileDict:
                 fileDict[sampleFamilyId] = list()
-                concatFileName = "{}/{}/{}_trio/{}_trio_phased_mcmc_combined.vcf.gz".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId)
+                # concatFileName is what each trio will be named after each trio is combined into one trio
+                concatFileName = "{}/{}/{}_trio/{}_trio_phased_combined.vcf.gz".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId)
                 concatFiles.append(concatFileName)
                 for chromosome in chromosomes:
                     #individualFileName = "{}/{}/{}/{}_{}".format(pathToFiles, sampleFamilyId, sampleId, sampleId, chromosome)
-                    trioFileName = "{}/{}/{}_trio/{}_trio_{}_phased_mcmc_reverted.vcf".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId, chromosome)
+                    trioFileName = "{}/{}/{}_trio/{}_trio_{}_phased_reverted.vcf".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId, chromosome)
                     #fileDict.add(individualFileName)
                     fileDict[sampleFamilyId].append(trioFileName)
-
+print(fileDict)
 def concatMerge(trio):
     files = fileDict[trio]
 
     for index, file in enumerate(files):
         #os.system("gzip -d {}.gz".format(file))
-        os.system("bgzip {} && tabix -fp vcf {}.gz".format(file, file))
+        os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(file, file))
         files[index] = "{}.gz".format(file)
 
 
-    fileName = re.findall(r"([\w\-\/_]+\/[\w\-_]+)_chr[A-Z0-9][A-Z0-9]?_phased_mcmc_reverted\.vcf", files[0])[0]
-    outputName = "{}_phased_mcmc_combined.vcf".format(fileName)
+    fileName = re.findall(r"([\w\-\/_]+\/[\w\-_]+)_chr[A-Z0-9][A-Z0-9]?_phased_reverted\.vcf", files[0])[0]
+    outputName = "{}_phased_combined.vcf".format(fileName)
     files = " ".join(files)
     os.system("bcftools concat {} -o {}".format(files, outputName))
     os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputName, outputName))
@@ -67,7 +69,7 @@ with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
 
 # Merge all phased, concatenated, trio files into one    
 concatFilesString = " ".join(concatFiles)
-outputName = "{}/idopathic_scoliosis_phased_mcmc_samples.vcf".format(pathToFiles)
+outputName = "{}/idopathic_scoliosis_phased_samples.vcf".format(pathToFiles)
 os.system("bcftools merge -m both {} -o {}".format(concatFilesString, outputName))
 os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputName, outputName))
 
@@ -130,7 +132,7 @@ with open(inputFile) as sampleFile:
             sampleDict[sampleId] = "{}\t{}\t0\t0\t{}\t1\n".format(sampleFamilyId, sampleId, gender)
             
 # create a sample list in the order of the vcf file
-with open("{}/idopathic_scoliosis_phased_mcmc_samples.vcf".format(pathToFiles)) as vcfFile:
+with gzip.open("{}/idopathic_scoliosis_phased_samples.vcf.gz".format(pathToFiles), "rt") as vcfFile:
     for line in vcfFile:
         if line.startswith("##"):
             continue
