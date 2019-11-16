@@ -2,6 +2,7 @@ import glob
 import gzip
 import re
 from sys import argv
+import os
 
 inputFile = argv[1]
 pathToFiles = argv[2]
@@ -66,7 +67,7 @@ for key, value in fileDict.items():
         rawCount = 0
         flipCount = 0
         total = 0
-        mendelError = 0
+        mendelErrorCount = 0
         fileNameNoSuffix = re.findall(r"([\w\-\/_]+\/[\w\-_]+_chr[A-Z0-9][A-Z0-9]?[_\w]*_phased)\.vcf", file)[0]
         outputName = "{}_reverted.vcf".format(fileNameNoSuffix)
         mendelErrorFile = "{}.snp.me".format(fileNameNoSuffix)
@@ -79,7 +80,7 @@ for key, value in fileDict.items():
                     mendelError = lineSplit[2]
                     pos = lineSplit[1]
                     if mendelError == "1":
-                        mendelErrorSet.add()
+                        mendelErrorSet.add(pos)
 
         with open(file, 'rt') as sample, open(outputName, 'w') as output:
             for line in sample:
@@ -115,11 +116,11 @@ for key, value in fileDict.items():
                         total += 1
                     else:
                         total += 1
-                        mendelError += 1
+                        mendelErrorCount += 1
             rawPercent = (rawCount / total) * 100
             flipPercent = (flipCount / total) * 100
             totalPercent = ((flipCount + rawCount) / total) * 100
             print("For {}, chr{}, {} ({:.2f}%) of the sites were unchanged".format(key, chrom, rawCount, rawPercent))
             print("For {}, chr{}, {} ({:.2f}%) of the sites were switched to match the reference panel".format(key, chrom, flipCount, flipPercent))
             print("For {}, chr{}, {:.2f}% of the sites are now congruent with the reference panel\n".format(key, chrom, totalPercent))
-            print("For {}, chr{}, {} sites were removed due to mendel errors\n".format(key, chrom, mendelError))
+            print("For {}, chr{}, {} sites were removed due to mendel errors\n".format(key, chrom, mendelErrorCount))
