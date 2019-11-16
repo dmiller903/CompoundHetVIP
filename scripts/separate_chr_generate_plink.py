@@ -90,7 +90,7 @@ def createPlink(file):
     outputName = "{}/{}/{}/{}_{}".format(filePath, famFolder, sampleFolder, sampleFile, chrNumber)
 
     os.system("/plink2 --vcf {} --fam {}/{}/{}_trio.fam --make-bed --out {}".format(file, filePath, famFolder, famFolder, outputName))
-    
+    """
     if chrNumber[-1].isnumeric():
         os.system("java -jar -Xms2g -Xmx4g /GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input {} \
         --update-id \
@@ -109,6 +109,7 @@ def createPlink(file):
         -ura \
         --outputType PLINK_BED --output {}_harmonized \
         --refType VCF --ref /ALL.chrY.phase3_integrated_v2a.20130502.genotypes".format(outputName, outputName, chrNumber))
+    """
 with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
     executor.map(createPlink, plinkFileList)
 
