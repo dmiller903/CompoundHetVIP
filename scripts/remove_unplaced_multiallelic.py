@@ -62,9 +62,8 @@ def removeSites(file):
                     outFile.write(line)
             else:
                 splitLine = line.split("\t")
+                # Only keep positions where genotype information is available for all samples
                 if splitLine[0] in chrToKeep and "," not in splitLine[4] and "./." not in line:
-                    outFile.write(line)
-                elif splitLine[0] in chrToKeep and "," not in splitLine[4] and "0/1" in line and ("0/0" in line or "1/1" in line) and "./." in line:
                     outFile.write(line)
 
     os.system("bgzip -f {}".format(outputName))
