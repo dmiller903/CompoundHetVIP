@@ -66,8 +66,22 @@ for key, value in fileDict.items():
         rawCount = 0
         flipCount = 0
         total = 0
-        outputName = re.findall(r"([\w\-\/_]+\/[\w\-_]+_chr[A-Z0-9][A-Z0-9]?[_\w]*_phased)\.vcf", file)[0]
-        with open(file, 'rt') as sample, open("{}_reverted.vcf".format(outputName), 'w') as output:
+        mendelError = 0
+        fileNameNoSuffix = re.findall(r"([\w\-\/_]+\/[\w\-_]+_chr[A-Z0-9][A-Z0-9]?[_\w]*_phased)\.vcf", file)[0]
+        outputName = "{}_reverted.vcf".format(fileNameNoSuffix)
+        mendelErrorFile = "{}.snp.me".format(fileNameNoSuffix)
+        mendelErrorSet = set()
+        # Create a set of any positions with mendel errors as given by the shapeit2 .snp.me files
+        if os.path.exists(mendelErrorFile):
+            with open(mendelErrorFile) as mendelFile:
+                for line in mendelFile:
+                    lineSplit = line.split("\t")
+                    mendelError = lineSplit[2]
+                    pos = lineSplit[1]
+                    if mendelError == "1":
+                        mendelErrorSet.add()
+
+        with open(file, 'rt') as sample, open(outputName, 'w') as output:
             for line in sample:
                 if "##" in line:
                     output.write(line)
@@ -86,11 +100,11 @@ for key, value in fileDict.items():
                     alt = lineList[altIndex]
                     rawStr = "{} {} {}".format(pos, ref, alt)
                     flipStr = "{} {} {}".format(pos, alt, ref)
-                    if rawStr in posDict[chrom]:
+                    if rawStr in posDict[chrom] and pos not in mendelErrorSet:
                         output.write(line)
                         rawCount += 1
                         total += 1
-                    elif flipStr in posDict[chrom]:
+                    elif flipStr in posDict[chrom] and pos not in mendelErrorSet:
                         lineList[refIndex] = alt
                         lineList[altIndex] = ref
                         line = "\t".join(lineList)
@@ -101,10 +115,11 @@ for key, value in fileDict.items():
                         total += 1
                     else:
                         total += 1
-            print(file)
+                        mendelError += 1
             rawPercent = (rawCount / total) * 100
             flipPercent = (flipCount / total) * 100
             totalPercent = ((flipCount + rawCount) / total) * 100
             print("For {}, chr{}, {} ({:.2f}%) of the sites were unchanged".format(key, chrom, rawCount, rawPercent))
             print("For {}, chr{}, {} ({:.2f}%) of the sites were switched to match the reference panel".format(key, chrom, flipCount, flipPercent))
             print("For {}, chr{}, {:.2f}% of the sites are now congruent with the reference panel\n".format(key, chrom, totalPercent))
+            print("For {}, chr{}, {} sites were removed due to mendel errors\n".format(key, chrom, mendelError))
