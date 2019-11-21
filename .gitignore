@@ -5,3 +5,5 @@
 *.Rproj
 *workspace
 *.out
+*.Rmd
+*.html
