@@ -9,6 +9,7 @@ import gzip
 #Input file or list of files
 inputFile = argv[1]
 pathToFiles = argv[2]
+diseaseName = argv[3]
 if pathToFiles.endswith("/"):
     pathToFiles = pathToFiles[0:-1]
 
@@ -69,7 +70,7 @@ with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
 
 # Merge all phased, concatenated, trio files into one    
 concatFilesString = " ".join(concatFiles)
-outputName = "{}/idiopathic_scoliosis_phased_samples.vcf".format(pathToFiles)
+outputName = "{}/{}_phased_samples.vcf".format(pathToFiles, diseaseName)
 os.system("bcftools merge -m both {} -o {}".format(concatFilesString, outputName))
 os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputName, outputName))
 
@@ -132,7 +133,7 @@ with open(inputFile) as sampleFile:
             sampleDict[sampleId] = "{}\t{}\t0\t0\t{}\t1\n".format(sampleFamilyId, sampleId, gender)
             
 # create a sample list in the order of the vcf file
-with gzip.open("{}/idiopathic_scoliosis_phased_samples.vcf.gz".format(pathToFiles), "rt") as vcfFile:
+with gzip.open("{}/{}_phased_samples.vcf.gz".format(pathToFiles, diseaseName), "rt") as vcfFile:
     for line in vcfFile:
         if line.startswith("##"):
             continue
@@ -142,6 +143,6 @@ with gzip.open("{}/idiopathic_scoliosis_phased_samples.vcf.gz".format(pathToFile
             break
 
 # use the sample order in the list to output each sample in order as found in the vcf file
-with open("{}/idiopathic_scoliosis.fam".format(pathToFiles), "w") as outputFile:
+with open("{}/{}.fam".format(pathToFiles, diseaseName), "w") as outputFile:
     for sample in sampleList:
         outputFile.write(sampleDict[sample])
