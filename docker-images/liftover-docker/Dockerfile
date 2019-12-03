@@ -30,7 +30,6 @@ apt-get update \
   && /root/miniconda2/bin/bgzip -d /references/Homo_sapiens_assembly38.fasta.gz \
   && /root/miniconda2/bin/bgzip -d /references/Homo_sapiens_assembly38.dict.gz \
   && /root/miniconda2/bin/bgzip -d /references/Homo_sapiens_assembly38.fasta.fai.gz \
-  && /root/miniconda2/bin/bgzip -d /references/Homo_sapiens_assembly38.dbsnp138.vcf.gz \
 
   # Install Picard
   && conda install -c bioconda picard=2.21.1 \
