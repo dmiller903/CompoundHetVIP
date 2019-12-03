@@ -20,13 +20,7 @@ apt-get update \
   && conda config --append channels bioconda \
   # Install samtools
   && conda install -c bioconda bcftools=1.9 \
-  && conda install -c bioconda samtools=1.9 \
-  && conda install -c bioconda vt=2015.11.10 \
-  # Download Reference
-  && wget --no-check-certificate https://files.osf.io/v1/resources/3znuj/providers/osfstorage/5dc1a5895bd3dd000cbb4e18/?zip= -O /references.zip \
-  && unzip /references.zip -d /references \
-  && rm /references.zip \
-  && /root/miniconda2/bin/bgzip -d /references/human_g1k_v37.fasta.gz 
-  #&& /root/miniconda2/bin/bgzip -d /references/human_g1k_v37_modified.fasta.gz \
+  && conda install -c bioconda samtools=1.9
+
 ENV \
   PATH=${PATH}:/root/miniconda2/bin/
