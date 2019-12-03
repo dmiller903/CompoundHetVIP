@@ -2,7 +2,7 @@ FROM debian:buster
   
 LABEL \
   author="Dustin Miller" \
-  description="miniconda2, plink, GATK4" \
+  description="Install miniconda2, java, and plink2" \
   maintainer="dustin_miller@byu.edu"
 
 RUN \
@@ -13,7 +13,7 @@ apt-get update \
   python3=3.7.3-1 \
   vim=2:8.1.0875-5 \
   unzip=6.0-23+deb10u1 \
-  # Install miniconda2
+  # Install miniconda2 and append channels
   && wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-4.7.10-Linux-x86_64.sh \
   && bash Miniconda2-4.7.10-Linux-x86_64.sh -b -p \
   && export PATH="/root/miniconda2/bin:$PATH" \
@@ -21,13 +21,11 @@ apt-get update \
   && conda config --append channels bioconda \
   && conda config --append channels anaconda \
   && conda config --append channels cyclus \
+  # Install Java
   && conda install -c cyclus java-jdk \
-  # Download Reference Files, Genotype Harmonizer, and Plink
+  # Install Plink2
   && wget --no-check-certificate https://github.com/dmiller903/ch-pipeline/raw/master/plink2_linux_x86_64_20190928.zip \
-  && unzip /plink2_linux_x86_64_20190928.zip \
-  && wget --no-check-certificate http://www.molgenis.org/downloads/GenotypeHarmonizer/GenotypeHarmonizer-1.4.20-dist.tar.gz \
-  && tar -xzf /GenotypeHarmonizer-1.4.20-dist.tar.gz \
-  && wget --no-check-certificate https://files.osf.io/v1/resources/3znuj/providers/osfstorage/5db8af02f3bb87000b85b76e/?zip= -O /references.zip \
-  && unzip /references.zip
+  && unzip /plink2_linux_x86_64_20190928.zip
+
 ENV \
   PATH=${PATH}:/root/miniconda2/bin/
