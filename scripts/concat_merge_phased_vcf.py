@@ -49,7 +49,7 @@ elif inputFile.endswith(".tsv"):
                     trioFileName = "{}/{}/{}_trio/{}_trio_{}_phased_reverted.vcf".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId, chromosome)
                     #fileDict.add(individualFileName)
                     fileDict[sampleFamilyId].append(trioFileName)
-print(fileDict)
+
 def concatMerge(trio):
     files = fileDict[trio]
 
