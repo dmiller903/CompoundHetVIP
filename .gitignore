@@ -7,3 +7,5 @@
 *.out
 *.Rmd
 *.html
+*.log
+*.tex
