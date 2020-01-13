@@ -3,6 +3,7 @@
 #Import necessary packages
 import time
 from sys import argv
+import urllib.request as url
 
 #Save time that script started
 startTime = time.time()
@@ -31,7 +32,16 @@ with open(manifestFile) as manifest:
     #as "Yes" or "No"
     for sample in manifest:
         sample = sample.rstrip().split("\t")
-        outputDict[sample[manifestExternalIdIndex]] = [sample[fileNameIndex], sample[familyIdIndex], sample[probandIndex]]
+        if sample[probandIndex] == "Yes" or sample[probandIndex] == "No":
+            outputDict[sample[manifestExternalIdIndex]] = [sample[fileNameIndex], sample[familyIdIndex], sample[probandIndex]]
+        #Sometimes "Yes" or "No" is not listed under "Proband". Therefore, this else statement will check NCBI for affected
+        #status based on "Aliquot External ID"
+        else:
+            getAffectedStatus = str(url.urlopen(f"https://www.ncbi.nlm.nih.gov/biosample/?term={sample[manifestExternalIdIndex]}").read())
+            if "subject is affected</th><td>Yes" in getAffectedStatus:
+                outputDict[sample[manifestExternalIdIndex]] = [sample[fileNameIndex], sample[familyIdIndex], "Yes"]
+            elif "subject is affected</th><td>No" in getAffectedStatus:
+                outputDict[sample[manifestExternalIdIndex]] = [sample[fileNameIndex], sample[familyIdIndex], "No"]
 
 #Obtain information from the biospecimen file and add to initial dictionary
 with open(biospecimenFile) as biospecimen:
