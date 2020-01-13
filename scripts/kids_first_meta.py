@@ -1,4 +1,4 @@
-#This function takes 4 arguments: manifest file, biospeciment file, clinical file, and the name/location of output file.
+#This function takes 4 arguments: manifest file, biospecimen file, clinical file, and the name/location of output file.
 
 #Import necessary packages
 import time
