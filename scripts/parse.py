@@ -36,6 +36,7 @@ with open(inputFile) as tsvFile:
         else:
             parentList.append(sample[fileNameIndex])
             parentDict[sample[fileNameIndex]] = [sample[familyIdIndex], sample[sampleIdIndex]]
+
 #Filter each proband file, remove  variants-only sites, create a dictionary of variant-only sites
 positionDict = {}
 def filterVariantOnly(file):
@@ -46,12 +47,12 @@ def filterVariantOnly(file):
     os.system("mkdir {}/{}/{}".format(pathToFiles, familyName, sampleName))
     familyDict = {familyName: {}}
     outputName = "{}/{}/{}/{}_parsed.vcf".format(pathToFiles, familyName, sampleName, sampleName)
-    with gzip.open("{}/{}".format(pathToFiles, file), 'rt') as gVCF, open(outputName, 'w') as parsed:
+    with gzip.open("{}/{}".format(pathToFiles, file), 'rt') as gVCF, gzip.open(outputName, 'wb') as parsed:
         for line in gVCF:
             if line.startswith('#'):
-                parsed.write(line)
+                parsed.write(line.encode())
             elif "END" not in line:
-                parsed.write(line)
+                parsed.write(line.encode())
                 line = line.split("\t")
                 chrom = line[0]
                 pos = line[1]
@@ -59,16 +60,14 @@ def filterVariantOnly(file):
                     familyDict[familyName][chrom] = {pos}
                 else:
                     familyDict[familyName][chrom].add(pos)
-    os.system("/root/miniconda2/bin/bgzip {}".format(outputName))
-    #os.system("gatk IndexFeatureFile -F {}.gz".format(outputName))
-    #os.system("rm {}".format(file))
     return(familyDict)
 
-
-with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
-    familyDict = executor.map(filterVariantOnly, probandList)
-    for dict in familyDict:
-        positionDict.update(dict)
+for i in range(0, len(probandList), numCores):
+    probandListSlice = probandList[i:(i+numCores)]
+    with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
+        familyDict = executor.map(filterVariantOnly, probandListSlice)
+        for dict in familyDict:
+            positionDict.update(dict)
 
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
@@ -81,28 +80,45 @@ def filterParents(file):
     sampleName = parentDict[file][1]
     os.system("mkdir {}/{}/{}".format(pathToFiles, familyName, sampleName))
     outputName = "{}/{}/{}/{}_parsed.vcf".format(pathToFiles, familyName, sampleName, sampleName)
-    with gzip.open("{}/{}".format(pathToFiles, file), 'rt') as gVCF, open(outputName, 'w') as parsed:
+    with gzip.open("{}/{}".format(pathToFiles, file), 'rt') as gVCF, gzip.open(outputName, 'wb') as parsed:
         for line in gVCF:
             if line.startswith("#"):
-                parsed.write(line)
+                parsed.write(line.encode())
             else:
                 lineList = line.split("\t")
                 chrom = lineList[0]
                 pos = lineList[1]
                 if pos in positionDict[familyName][chrom]:
-                    parsed.write(line)
+                    parsed.write(line.encode())
                 else:
                     if "END" in line:
                         for i in range(int(pos), int(lineList[7].lstrip("END=")) + 1):
                             if str(i) in positionDict[familyName][chrom]:
-                                parsed.write(line)
-    os.system("/root/miniconda2/bin/bgzip {}".format(outputName))
-    #os.system("gatk IndexFeatureFile -F {}.gz".format(outputName))
-    #os.system("rm {}".format(file))
+                                parsed.write(line.encode())
 
+for i in range(0, len(parentList), numCores):
+    parentListSlice = parentList[i:(i+numCores)]
+    with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
+        executor.map(filterParents, parentListSlice)
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
-    executor.map(filterParents, parentList)
+#bgzip all parsed files
+combinedList = probandList + parentList
+probandDict.update(parentDict)
+
+def bgzipFiles(file):
+    fileName = re.findall(r'(.+)\.g\.vcf\.gz', file)[0]
+    familyName = probandDict[file][0]
+    sampleName = probandDict[file][1]
+
+    parsedName = "{}/{}/{}/{}_parsed.vcf".format(pathToFiles, familyName, sampleName, sampleName)
+    outputName = "{}.gz".format(parsedName)
+    os.system("zcat {} | /root/miniconda2/bin/bgzip > {}".format(parsedName, outputName))
+    os.system("rm {}".format(parsedName))
+
+for i in range(0, len(combinedList), numCores):
+    combinedListSlice = combinedList[i:(i+numCores)]
+    with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
+        executor.map(bgzipFiles, combinedListSlice)
 
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
