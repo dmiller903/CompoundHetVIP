@@ -9,9 +9,9 @@ import gzip
 #Input file or list of files
 inputFile = argv[1]
 pathToFiles = argv[2]
-diseaseName = argv[3]
 if pathToFiles.endswith("/"):
     pathToFiles = pathToFiles[0:-1]
+diseaseName = re.findall(r"[\w_\-]+", pathToFiles)[0]
 
 #Create a list of file(s) that need to have unplaced and multiallelic sites removed
 fileDict = dict()
