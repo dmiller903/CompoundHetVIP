@@ -44,7 +44,7 @@ elif inputFile.endswith(".tsv"):
             fileSet.add(trioFileName)
 
 plinkFileSet = set()
-#Separate combinedTrio by chromosome
+#Separate combined trio files and individual participant files by chromosome
 def separateByChr(file):
     with gzip.open(file, "rt") as vcf:
         fileName = re.findall(r"([\w\-/_]+)_liftover_parsed\.?.*\.?.*\.gz", file)[0]
@@ -83,7 +83,7 @@ with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
 plinkFileList = list(plinkFileSet)
 plinkFileList.sort()
 
-#Create harmonized bed, bim files for each chromosome
+#Create bed, bim files for each chromosome of each trio
 
 def createPlink(file):
     filePath, famFolder, sampleFolder, sampleFile, chrNumber = re.findall(r"([\w\-/_]+)\/([\w\-]+)\/([\w\-]+)\/([\w\-]+)_(chr[\w]+)\.?.*\.?.*\.vcf", file)[0]
