@@ -28,8 +28,10 @@ apt-get update \
   && conda config --append channels bioconda \
   && conda config --append channels conda-forge \
   && conda config --append channels anaconda \
+  && conda config --append channels cyclus \
   # Install other dependencies through conda
   && conda install -c conda-forge xz \
+  && conda install -c cyclus java-jdk \
   # Install git
   && conda install -c anaconda git=2.20.1 \
   # Download Reference Files
@@ -47,7 +49,7 @@ apt-get update \
   && make install \
   && cd / \
   # Download Beagle Java file
-  && wget --no-check-certificate https://faculty.washington.edu/browning/beagle/beagle.13Aug19.a31.jar \
+  && wget --no-check-certificate http://faculty.washington.edu/browning/beagle/beagle.25Nov19.28d.jar \
   # Download and Extract Eagle executable
   && wget --no-check-certificate https://data.broadinstitute.org/alkesgroup/Eagle/downloads/Eagle_v2.4.1.tar.gz \
   && tar xzf Eagle_v2.4.1.tar.gz \
