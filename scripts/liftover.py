@@ -45,21 +45,21 @@ def liftoverFiles(file):
     if "FM_" in file and "parsed" in file:
         fileFolder, fileName = re.findall("([\w\-\/_]+)\/([\w\-_]+)_parsed\.?.*\.?.*\.gz", file)[0]
         os.system("gatk IndexFeatureFile -F {}".format(file))
-        os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O /tmp/{}_genotyped.vcf.gz'.format(file, fileName))
-        os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I=/tmp/{}_genotyped.vcf.gz O={}/{}_liftover.vcf.gz \
-        CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}/{}_rejected_variants.vcf".format(fileName, fileFolder, fileName, fileFolder, fileName))
+        os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O {}/{}_genotyped.vcf.gz'.format(file, fileFolder, fileName))
+        os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I={}/{}_genotyped.vcf.gz O={}/{}_liftover.vcf.gz \
+        CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}/{}_rejected_variants.vcf".format(fileFolder, fileName, fileFolder, fileName, fileFolder, fileName))
     elif "FM_" in file and "parsed" not in file:
         fileFolder, fileName = re.findall("([\w\-\/_]+)\/([\w\-_]+)\.?.*\.?.*\.gz", file)[0]
         os.system("gatk IndexFeatureFile -F {}".format(file))
-        os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O /tmp/{}_genotyped.vcf.gz'.format(file, fileName))
-        os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I=/tmp/{}_genotyped.vcf.gz O={}/{}_liftover.vcf.gz \
-        CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}/{}_rejected_variants.vcf".format(fileName, fileFolder, fileName, fileFolder, fileName))
+        os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O {}/{}_genotyped.vcf.gz'.format(file, fileFolder, fileName))
+        os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I={}/{}_genotyped.vcf.gz O={}/{}_liftover.vcf.gz \
+        CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}/{}_rejected_variants.vcf".format(fileFolder, fileName, fileFolder, fileName, fileFolder, fileName))
     else:
         fileName = re.findall("([\w\-\/_\.]+)\.?.*\.?.*\.gz", file)[0]
         os.system("gatk IndexFeatureFile -F {}".format(file))
-        os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O /tmp/{}_genotyped.vcf'.format(file, fileName))
-        os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I=/tmp/{}_genotyped.vcf O={}_liftover.vcf.gz \
-        CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}_rejected_variants.vcf".format(fileName, fileName, fileName))
+        os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O {}/{}_genotyped.vcf'.format(file, fileFolder, fileName))
+        os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I={}/{}_genotyped.vcf O={}_liftover.vcf.gz \
+        CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}_rejected_variants.vcf".format(fileFolder, fileName, fileName, fileName))
 
 
 with concurrent.futures.ProcessPoolExecutor(max_workers=24) as executor:
