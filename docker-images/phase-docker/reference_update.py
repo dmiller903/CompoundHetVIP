@@ -1,6 +1,7 @@
 import re
 import os
 import glob
+import concurrent.futures
 
 #Update original genetic map files format to Eagle and Beagle formats
 def updateFiles(file):
