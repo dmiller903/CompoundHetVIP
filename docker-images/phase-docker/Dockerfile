@@ -36,9 +36,9 @@ apt-get update \
   && conda install -c anaconda git=2.20.1 \
   # Download Reference Files
   && wget --no-check-certificate https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz -P /references \
-  && cd /references \
-  && tar zxvf /references/1000GP_Phase3.tgz \
-  && cd / \
+  && tar zxf /references/1000GP_Phase3.tgz -C /references/ \
+  && wget --no-check-certificate https://raw.githubusercontent.com/dmiller903/ch-pipeline/master/docker-images/phase-docker/reference_update.py \
+  && python3 reference_update.py \
   # Install shapeit
   && wget --no-check-certificate https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r904.glibcv2.17.linux.tar.gz \
   && tar -zxvf shapeit.v2.r904.glibcv2.17.linux.tar.gz \
