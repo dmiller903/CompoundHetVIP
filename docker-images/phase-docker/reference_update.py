@@ -7,8 +7,8 @@ os.system("wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz && tar x
 
 #Update original genetic map files format to Eagle and Beagle formats
 for file in glob.glob("/references/1000GP_Phase3/genetic_map_chr*_combined_b37.txt"):
-    fileName = re.findall(r"(genetic_map_chr(\w)_combined_b37\.txt)", file)[0][0]
-    chrom = re.findall(r"(genetic_map_chr(\w)_combined_b37\.txt)", file)[0][1]
+    fileName = re.findall(r"([\w/_]+genetic_map_chr(\w)_combined_b37\.txt)", file)[0][0]
+    chrom = re.findall(r"([\w/_]+genetic_map_chr(\w)_combined_b37\.txt)", file)[0][1]
     eagleOutput = f"{fileName}_eagle.txt"
     beagleOutput = f"{fileName}_beagle.txt"
     with open(file) as inputFile, open(eagleOutput, 'w') as eagleOutput, open(beagleOutput, 'w') as beagleOutput:
