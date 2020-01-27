@@ -3,7 +3,7 @@ import os
 import glob
 
 #Update original genetic map files format to Eagle and Beagle formats
-for file in glob.glob("/references/1000GP_Phase3/genetic_map_chr*_combined_b37.txt"):
+def updateFiles(file):
     fileName = re.findall(r"([\w/_]+genetic_map_chr(\w)+_combined_b37)\.txt", file)[0][0]
     chrom = re.findall(r"([\w/_]+genetic_map_chr(\w)+_combined_b37)\.txt", file)[0][1]
     eagleOutput = f"{fileName}_eagle.txt"
@@ -25,3 +25,6 @@ for file in glob.glob("/references/1000GP_Phase3/genetic_map_chr*_combined_b37.t
     && mv ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz /references/1000GP_Phase3/")
     os.system(f"wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi \
     && mv ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi /references/1000GP_Phase3/")
+
+with concurrent.futures.ProcessPoolExecutor(max_workers=22) as executor:
+    executor.map(updateFiles, glob.glob("/references/1000GP_Phase3/genetic_map_chr*_combined_b37.txt"))
