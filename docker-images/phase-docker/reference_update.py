@@ -7,7 +7,8 @@ os.system("wget https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz && tar x
 
 #Update original genetic map files format to Eagle and Beagle formats
 for file in glob.glob("/references/1000GP_Phase3/genetic_map_chr*_combined_b37.txt"):
-    fileName = re.findall(r"([\w_/]+)\.txt", file)[0]
+    fileName = re.findall(r"(genetic_map_chr(\w)_combined_b37\.txt)", file)[0][0]
+    chrom = re.findall(r"(genetic_map_chr(\w)_combined_b37\.txt)", file)[0][1]
     eagleOutput = f"{fileName}_eagle.txt"
     beagleOutput = f"{fileName}_beagle.txt"
     with open(file) as inputFile, open(eagleOutput, 'w') as eagleOutput, open(beagleOutput, 'w') as beagleOutput:
@@ -16,14 +17,12 @@ for file in glob.glob("/references/1000GP_Phase3/genetic_map_chr*_combined_b37.t
         eagleOutput.write(header)
         for line in inputFile:
             #Eagle format
-            eagleLine = "22 " + line
+            eagleLine = f"{chrom} " + line
             eagleOutput.write(eagleLine)
             #Beagle format
             beagleLineList = line.rstrip().split(" ")
-            beagleLine = f"22  {beagleLineList[1]} {beagleLineList[2]} {beagleLineList[0]}\n"
+            beagleLine = f"{chrom} {beagleLineList[1]} {beagleLineList[2]} {beagleLineList[0]}\n"
             beagleOutput.write(beagleLine)
-
-#Install reference VCF's
-for i in range(1, 23):
-    os.system(f"wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr{i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz \
-    && mv ALL.chr{i}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz /references/1000GP_Phase3/")
+    #Download reference VCF's
+    os.system(f"wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz \
+    && mv ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz /references/1000GP_Phase3/")
