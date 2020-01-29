@@ -34,6 +34,8 @@ apt-get update \
   && conda install -c cyclus java-jdk \
   # Install git
   && conda install -c anaconda git=2.20.1 \
+  # Install samtools
+  && conda install -c bioconda samtools=1.9 \
   # Download Reference Files
   && wget --no-check-certificate https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz -P /references \
   && tar zxf /references/1000GP_Phase3.tgz -C /references/ \
