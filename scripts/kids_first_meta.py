@@ -4,6 +4,8 @@
 import time
 from sys import argv
 import urllib.request as url
+import os
+import re
 
 #Save time that script started
 startTime = time.time()
@@ -33,7 +35,12 @@ with open(manifestFile) as manifest:
     for sample in manifest:
         sample = sample.rstrip().split("\t")
         if sample[probandIndex] == "Yes" or sample[probandIndex] == "No":
-            outputDict[sample[manifestExternalIdIndex]] = [sample[fileNameIndex], sample[familyIdIndex], sample[probandIndex]]
+            externalID = sample[manifestExternalIdIndex]
+            if "Schiffman" not in externalID:
+                outputDict[sample[manifestExternalIdIndex]] = [sample[fileNameIndex], sample[familyIdIndex], sample[probandIndex]]
+            else:
+                externalID = re.findall(r"Schiffman\-\w+", externalID)[0]
+                outputDict[externalID] = [sample[fileNameIndex], sample[familyIdIndex], sample[probandIndex]]
         #Sometimes "Yes" or "No" is not listed under "Proband". Therefore, this else statement will check NCBI for affected
         #status based on "Aliquot External ID"
         else:
@@ -54,7 +61,16 @@ with open(biospecimenFile) as biospecimen:
     #Use the patient "External Aliquot Id" as the key to append the "Biospecimens Id" to the value list.
     for line in biospecimen:
         line = line.rstrip().split("\t")
-        outputDict[line[biospecimenExternalIdIndex]].append(line[sampleIdIndex])
+        externalID = line[biospecimenExternalIdIndex]
+        if "Schiffman" not in externalID:
+            outputDict[line[biospecimenExternalIdIndex]].append(line[sampleIdIndex])
+        else:
+            try:
+                externalID = re.findall(r"Schiffman\-\w+", externalID)[0]
+                outputDict[externalID].append(line[sampleIdIndex])
+            except:
+                print(f"WARNING: {externalID} not found in biospecimen file!")
+                continue
 
 #Obtain gender information from the clinical file and add to initial dictionary
 with open(clinicalFile) as clinical:
@@ -67,7 +83,16 @@ with open(clinicalFile) as clinical:
     #Use the patient "External Id" as the key to append the "Biospecimens Id" to the value list.
     for line in clinical:
         line = line.rstrip().split("\t")
-        outputDict[line[clinicalExternalIdIndex]].append(line[genderIndex])
+        externalID = sample[manifestExternalIdIndex]
+        if "Schiffman" not in externalID:
+            outputDict[line[clinicalExternalIdIndex]].append(line[genderIndex])
+        else:
+            try:
+                externalID = re.findall(r"Schiffman\-\w+", externalID)[0]
+                outputDict[line[clinicalExternalIdIndex]].append(line[genderIndex])
+            except:
+                print(f"WARNING: {externalID} not found in clinical file!")
+                continue
 
 #Create list of samples where only trios are included
 familyDict = {}
