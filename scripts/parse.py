@@ -30,12 +30,28 @@ with open(inputFile) as tsvFile:
     sampleIdIndex = header.index("sample_id")
     for sample in tsvFile:
         sample = sample.rstrip().split("\t")
-        if sample[probandIndex] == "Yes":
-            probandList.append(sample[fileNameIndex])
-            probandDict[sample[fileNameIndex]] = [sample[familyIdIndex], sample[sampleIdIndex]]
-        else:
-            parentList.append(sample[fileNameIndex])
-            parentDict[sample[fileNameIndex]] = [sample[familyIdIndex], sample[sampleIdIndex]]
+        if os.path.exists(f"{pathToFiles}/{sample[fileNameIndex]}"):
+            if sample[probandIndex] == "Yes":
+                probandList.append(sample[fileNameIndex])
+                probandDict[sample[fileNameIndex]] = [sample[familyIdIndex], sample[sampleIdIndex]]
+            else:
+                parentList.append(sample[fileNameIndex])
+                parentDict[sample[fileNameIndex]] = [sample[familyIdIndex], sample[sampleIdIndex]]
+
+#Alter parent and proband lists to include only the available downloaded files
+newProbandList = []
+newParentList = []
+for proband in probandList:
+    familyName = probandDict[proband][0]
+    parentFilesAvailable = 0
+    for parentFile in parentDict:
+        if parentDict[parentFile][0] == familyName:
+            parentFilesAvailable += 1
+    if parentFilesAvailable == 2:
+        newProbandList.append(proband)
+        for parentFile in parentDict:
+            if parentDict[parentFile][0] == familyName:
+                newParentList.append(parentFile)
 
 #Filter each proband file, remove  variants-only sites, create a dictionary of variant-only sites
 positionDict = {}
@@ -60,11 +76,13 @@ def filterVariantOnly(file):
                     familyDict[familyName][chrom] = {pos}
                 else:
                     familyDict[familyName][chrom].add(pos)
+    #os.system(f"rm {pathToFiles}/{file}")
     return(familyDict)
 
-for i in range(0, len(probandList), numCores):
-    probandListSlice = probandList[i:(i+numCores)]
+for i in range(0, len(newProbandList), numCores):
+    probandListSlice = newProbandList[i:(i+numCores)]
     with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
+        executor.map(filterVariantOnly, probandListSlice)
         familyDict = executor.map(filterVariantOnly, probandListSlice)
         for dict in familyDict:
             positionDict.update(dict)
@@ -95,14 +113,15 @@ def filterParents(file):
                         for i in range(int(pos), int(lineList[7].lstrip("END=")) + 1):
                             if str(i) in positionDict[familyName][chrom]:
                                 parsed.write(line.encode())
+    #os.system(f"rm {pathToFiles}/{file}")
 
-for i in range(0, len(parentList), numCores):
-    parentListSlice = parentList[i:(i+numCores)]
+for i in range(0, len(newParentList), numCores):
+    parentListSlice = newParentList[i:(i+numCores)]
     with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
         executor.map(filterParents, parentListSlice)
 
 #bgzip all parsed files
-combinedList = probandList + parentList
+combinedList = newProbandList + newParentList
 probandDict.update(parentDict)
 
 def bgzipFiles(file):
