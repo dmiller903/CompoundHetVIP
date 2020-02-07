@@ -76,7 +76,7 @@ def filterVariantOnly(file):
                     familyDict[familyName][chrom] = {pos}
                 else:
                     familyDict[familyName][chrom].add(pos)
-    #os.system(f"rm {pathToFiles}/{file}")
+    os.system(f"rm {pathToFiles}/{file}")
     return(familyDict)
 
 for i in range(0, len(newProbandList), numCores):
@@ -113,7 +113,7 @@ def filterParents(file):
                         for i in range(int(pos), int(lineList[7].lstrip("END=")) + 1):
                             if str(i) in positionDict[familyName][chrom]:
                                 parsed.write(line.encode())
-    #os.system(f"rm {pathToFiles}/{file}")
+    os.system(f"rm {pathToFiles}/{file}")
 
 for i in range(0, len(newParentList), numCores):
     parentListSlice = newParentList[i:(i+numCores)]
