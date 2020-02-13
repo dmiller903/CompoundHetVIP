@@ -1,120 +1,40 @@
-import gzip
-import re
 import os
 import time
-from sys import argv
-import concurrent.futures
+import argparse
 
+#Keep track of when the script began
 startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
-#Input file or list of files
-inputFile = argv[1]
-pathToFiles = argv[2]
-numCores = int(argv[3])
-if pathToFiles.endswith("/"):
-    pathToFiles = pathToFiles[0:-1]
+# Argparse Information
+parser = argparse.ArgumentParser(description='Creates a combined trio file using GATKs "CombineGVCFs"  and GenotypeGVCFs \
+tools')
 
-#Create a dictionary of files that need to be combined into one vcf file
-fileDict = {}
-with open(inputFile) as sampleFile:
-    header = sampleFile.readline()
-    headerList = header.rstrip().split("\t")
-    fileNameIndex = headerList.index("file_name")
-    familyIdIndex = headerList.index("family_id")
-    sampleIdIndex = headerList.index("sample_id")
-    for sample in sampleFile:
-        sampleData = sample.rstrip("\n").split("\t")
-        print(sampleData)
-        sampleId = sampleData[sampleIdIndex]
-        sampleFamilyId = sampleData[familyIdIndex]
-        actualFileName = "{}/{}/{}/{}_parsed.vcf.gz".format(pathToFiles, sampleFamilyId, sampleId, sampleId)
-        if sampleFamilyId not in fileDict:
-            fileDict[sampleFamilyId] = [actualFileName]
-        else:
-            fileDict[sampleFamilyId].append(actualFileName)
+parser.add_argument('proband_vcf', help='Proband VCF File')
+parser.add_argument('parent_1_vcf', help='Maternal or Paternal VCF File of Proband')
+parser.add_argument('parent_2_vcf', help='Maternal or Paternal VCF File of Proband')
+parser.add_argument('output_vcf', help='Path and name of combined vcf output file')
 
-probandDict = {}
-parentDict = {}
-with open(inputFile) as sampleFile:
-    header = sampleFile.readline()
-    headerList = header.rstrip().split("\t")
-    fileNameIndex = headerList.index("file_name")
-    familyIdIndex = headerList.index("family_id")
-    sampleIdIndex = headerList.index("sample_id")
-    probandIndex = headerList.index("proband")
-    genderIndex = headerList.index("sex")
-    for sample in sampleFile:
-        sampleData = sample.rstrip("\n").split("\t")
-        fileName = sampleData[fileNameIndex]
-        sampleFamilyId = sampleData[familyIdIndex]
-        sampleId = sampleData[sampleIdIndex]
-        probandStatus = sampleData[probandIndex]
-        gender = sampleData[genderIndex]
-        if probandStatus == "Yes":
-            probandDict[sampleId] = sampleFamilyId
-        else:
-            if sampleFamilyId not in parentDict:
-                parentDict[sampleFamilyId] = {sampleId: gender}
-            else:
-                parentDict[sampleFamilyId][sampleId] = gender
+args = parser.parse_args()
 
-# Create fam files
-def createFamFiles(proband):
-    familyId = probandDict[proband]
-    familyDict = parentDict[familyId]
-    paternal = ""
-    maternal = ""
-    outputString = ""
-    sampleDict = {}
-    for key, value in familyDict.items():
-        if value == "1":
-            paternal = key
-        else:
-            maternal = key
-    with open(inputFile) as sampleFile:
-        header = sampleFile.readline()
-        headerList = header.rstrip().split("\t")
-        fileNameIndex = headerList.index("file_name")
-        familyIdIndex = headerList.index("family_id")
-        sampleIdIndex = headerList.index("sample_id")
-        probandIndex = headerList.index("proband")
-        genderIndex = headerList.index("sex")
-        for sample in sampleFile:
-            sampleData = sample.rstrip("\n").split("\t")
-            fileName = sampleData[fileNameIndex]
-            sampleFamilyId = sampleData[familyIdIndex]
-            sampleId = sampleData[sampleIdIndex]
-            probandStatus = sampleData[probandIndex]
-            gender = sampleData[genderIndex]
-            if probandStatus == "Yes" and familyId == sampleFamilyId:
-                sampleDict[sampleId] = "{}\t{}\t{}\t{}\t{}\t2\n".format(sampleFamilyId, sampleId, paternal, maternal, gender)
-            elif probandStatus == "No" and familyId == sampleFamilyId:
-                sampleDict[sampleId] = "{}\t{}\t0\t0\t{}\t1\n".format(sampleFamilyId, sampleId, gender)
-    with open("{}/{}/{}_trio.fam".format(pathToFiles, familyId, familyId), "w") as outputFile:
-        for key, value in sorted(sampleDict.items()):
-            outputFile.write(value)
+#Create variables of each argument from argparse
+probandFile = args.proband_vcf
+parent1File = args.parent_1_vcf
+parent2File = args.parent_2_vcf
+outputName = args.output_vcf
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
-    executor.map(createFamFiles, probandDict)
+# Use GATK to combine all trios into one vcf and then genotype the combined trio vcf
+files = [probandFile, parent1File, parent2File]
+fileString = ""
+tempName = "/tmp/temp.vcf"
+for file in files:
+    fileString += "-V {} ".format(file)
+    os.system("/root/miniconda2/bin/gatk IndexFeatureFile -F {}".format(file))
+os.system("/root/miniconda2/bin/gatk CombineGVCFs -R /references/Homo_sapiens_assembly38.fasta {} -O {}".format(fileString, tempName))
+os.system("gatk IndexFeatureFile -F {}".format(tempName))
+os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O {}'.format(tempName, outputName))
 
-filesToGenotype = []
-# Use GATK to combine all trios into one vcf
-def combineTrios(trio):
-    files = fileDict[trio]
-    fileString = ""
-    os.system("mkdir {}/{}/{}_trio".format(pathToFiles, trio, trio))
-    outputName = "{}/{}/{}_trio/{}_trio.vcf.gz".format(pathToFiles, trio, trio, trio)
-    for file in files:
-        fileString += "-V {} ".format(file)
-        os.system("/root/miniconda2/bin/gatk IndexFeatureFile -F {}".format(file))
-    os.system("/root/miniconda2/bin/gatk CombineGVCFs -R /references/Homo_sapiens_assembly38.fasta {} -O {}".format(fileString, outputName))
-    return(outputName)
-with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
-    outputName = executor.map(combineTrios, fileDict)
-    for file in outputName:
-        filesToGenotype.append(file)
-
+#Print message and how long the previous steps took
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print('{}Trios have been combined. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
+print('Trio has been combined. Time elapsed: {} minutes ({} hours){}'.format(timeElapsedMinutes, timeElapsedHours, char))

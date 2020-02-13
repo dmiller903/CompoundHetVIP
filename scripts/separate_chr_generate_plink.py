@@ -1,47 +1,29 @@
-import gzip
-import re
 import os
 import time
-from sys import argv
-import concurrent.futures
+import argparse
+import re
+import gzip
 
+#Keep track of when the script began
 startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
-#Input file or list of files
-inputFile = argv[1]
-pathToFiles = argv[2]
-numCores = int(argv[3])
-if pathToFiles.endswith("/"):
-    pathToFiles = pathToFiles[0:-1]
+# Argparse Information
+parser = argparse.ArgumentParser(description="Phasing programs require that chromosomes be phased separately. Some \
+phasing programs, such as SHAPEIT2, require PLINK files in order to phase. Therefore, this script separates a VCF into \
+chromosome VCF files. This step also generates the necessary PLINK files needed for phasing.")
 
-#Create a list of file(s) that need to have unplaced and multiallelic sites removed
-fileSet = set()
-if inputFile.endswith(".gz"):
-    fileSet.add(inputFile)
+parser.add_argument('input_vcf', help='Input VCF file')
+parser.add_argument('output_vcf', help='Path and name of output VCF file')
 
-elif inputFile.endswith(".txt"):
-    with open(inputFile) as sampleFile:
-        for sample in sampleFile:
-            sample = sample.rstrip("\n")
-            fileSet.add(sample)
+args = parser.parse_args()
 
-elif inputFile.endswith(".tsv"):
-    with open(inputFile) as sampleFile:
-        header = sampleFile.readline()
-        headerList = header.rstrip().split("\t")
-        fileNameIndex = headerList.index("file_name")
-        familyIdIndex = headerList.index("family_id")
-        sampleIdIndex = headerList.index("sample_id")
-        for sample in sampleFile:
-            sampleData = sample.rstrip("\n").split("\t")
-            fileName = sampleData[fileNameIndex]
-            sampleFamilyId = sampleData[familyIdIndex]
-            sampleId = sampleData[sampleIdIndex]
-            individualFileName = "{}/{}/{}/{}_liftover_parsed.vcf.gz".format(pathToFiles, sampleFamilyId, sampleId, sampleId)
-            trioFileName = "{}/{}/{}_trio/{}_trio_liftover_parsed.vcf.gz".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId)
-            fileSet.add(individualFileName)
-            fileSet.add(trioFileName)
+#Create variables of each argument from argparse
+inputFile = args.input_vcf
+outputFile = args.output_vcf
+tempFile = "/tmp/temp.vcf"
+fileWithoutSuffix = re.findall(r'([\w\-_/]+)\.', outputFile)[0]
+duplicateFile = f"{fileWithoutSuffix}_removed_duplicates.vcf"
 
 plinkFileSet = set()
 #Separate combined trio files and individual participant files by chromosome
