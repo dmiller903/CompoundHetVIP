@@ -16,19 +16,19 @@ process if the non-variant positions were included throughout the whole compound
 each proband file and removes all non-variant sites. If parental files are included, the script then filters each parent \
 file for sites that only occur in the proband of that family.')
 
-parser.add_argument('proband_file', help='Proband File')
+parser.add_argument('proband_gVCF', help='Proband File')
 parser.add_argument('output_path', help='Path to where output files should go')
-parser.add_argument('--parent_1_file', help='Maternal or Paternal File of Proband')
-parser.add_argument('--parent_2_file', help='Maternal or Paternal File of Proband')
+parser.add_argument('--parent_1_gVCF', help='Maternal or Paternal File of Proband')
+parser.add_argument('--parent_2_gVCF', help='Maternal or Paternal File of Proband')
 parser.add_argument('--output_suffix', help='Suffix for each output file (do not include .gz at end as this will be included \
 when the file is bgzipped', default='_variant_sites.vcf')
 
 args = parser.parse_args()
 
 #Create variables of each argument from argparse
-probandFile = args.proband_file
-parent1File = args.parent_1_file
-parent2File = args.parent_2_file
+probandFile = args.proband_gVCF
+parent1File = args.parent_1_gVCF
+parent2File = args.parent_2_gVCF
 outputPath = args.output_path
 if outputPath.endswith("/"):
     outputPath = outputPath[0:-1]
