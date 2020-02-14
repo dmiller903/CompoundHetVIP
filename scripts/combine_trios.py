@@ -37,4 +37,4 @@ os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapien
 #Print message and how long the previous steps took
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print('Trio has been combined. Time elapsed: {} minutes ({} hours){}'.format(timeElapsedMinutes, timeElapsedHours, char))
+print('{}Trio has been combined. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
