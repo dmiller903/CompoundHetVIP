@@ -3,6 +3,7 @@ import time
 import argparse
 import re
 import gzip
+import concurrent.futures
 
 #Keep track of when the script began
 startTime = time.time()
@@ -14,69 +15,49 @@ phasing programs, such as SHAPEIT2, require PLINK files in order to phase. There
 chromosome VCF files. This step also generates the necessary PLINK files needed for phasing.")
 
 parser.add_argument('input_vcf', help='Input VCF file')
-parser.add_argument('output_vcf', help='Path and name of output VCF file')
+parser.add_argument('output_file', help='Path and prefix name of output files (no suffix). e.g. "/Data/file1"')
+parser.add_argument('--fam_file', help='If using a trio, a fam file is needed to create appropriate PLINK files. \
+If no fam file is included, PLINK with output a generic fam file. \
+see https://www.cog-genomics.org/plink/2.0/formats#fam for formatting guidelines')
 
 args = parser.parse_args()
 
 #Create variables of each argument from argparse
 inputFile = args.input_vcf
-outputFile = args.output_vcf
-tempFile = "/tmp/temp.vcf"
-fileWithoutSuffix = re.findall(r'([\w\-_/]+)\.', outputFile)[0]
-duplicateFile = f"{fileWithoutSuffix}_removed_duplicates.vcf"
+outputFile = args.output_file
+famFile = args.fam_file
 
-plinkFileSet = set()
 #Separate combined trio files and individual participant files by chromosome
-def separateByChr(file):
-    with gzip.open(file, "rt") as vcf:
-        fileName = re.findall(r"([\w\-/_]+)_liftover_parsed\.?.*\.?.*\.gz", file)[0]
-        outputName = "{}_".format(fileName)
-        header = ""
-        tmpFileSet = set()
-        chromosomeSet = set()
-        chromosomeNumber = ""
-        
-        for line in vcf:
-            if line.startswith("#"):
-                header = header + line
-            elif not line.startswith("#") and line.split("\t")[0] not in chromosomeSet:
-                chromosomeNumber = line.split("\t")[0]
-                os.system("rm {}{}.*".format(outputName, chromosomeNumber))
-                os.system("rm {}{}*harmonized.*".format(outputName, chromosomeNumber))
-                os.system("rm {}{}*harmonized*.*".format(outputName, chromosomeNumber))
-                with open("{}{}.vcf".format(outputName, chromosomeNumber), "w") as chromosome:
-                    chromosome.write(header)
-                    chromosome.write(line)
-                    chromosomeSet.add(chromosomeNumber)
-                    if "trio" in outputName:
-                        tmpFileSet.add("{}{}.vcf".format(outputName, chromosomeNumber))
-            else:
-                with open("{}{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
-                    chromosome.write(line)
-        
-        return(tmpFileSet)
-
-with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
-    tmpFileList = executor.map(separateByChr, fileSet)
-    for tmpList in tmpFileList:
-        for tmpSet in tmpList:
-            plinkFileSet.add(tmpSet)
-
-plinkFileList = list(plinkFileSet)
-plinkFileList.sort()
+plinkFileSet = set()
+with gzip.open(inputFile, "rt") as vcf:
+    outputName = "{}_".format(outputFile)
+    chromosomeSet = set()
+    chromosomeNumber = ""
+    header = ""
+    for line in vcf:
+        if line.startswith("#"):
+            header = header + line
+        elif not line.startswith("#") and line.split("\t")[0] not in chromosomeSet:
+            chromosomeNumber = line.split("\t")[0]
+            with open("{}{}.vcf".format(outputName, chromosomeNumber), "w") as chromosome:
+                chromosome.write(header)
+                chromosome.write(line)
+                chromosomeSet.add(chromosomeNumber)
+                plinkFileSet.add("{}{}.vcf".format(outputName, chromosomeNumber))
+        else:
+            with open("{}{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
+                chromosome.write(line)
 
 #Create bed, bim files for each chromosome of each trio
-
-def createPlink(file):
-    filePath, famFolder, sampleFolder, sampleFile, chrNumber = re.findall(r"([\w\-/_]+)\/([\w\-]+)\/([\w\-]+)\/([\w\-]+)_(chr[\w]+)\.?.*\.?.*\.vcf", file)[0]
-    outputName = "{}/{}/{}/{}_{}".format(filePath, famFolder, sampleFolder, sampleFile, chrNumber)
-
-    os.system("/plink2 --vcf {} --fam {}/{}/{}_trio.fam --make-bed --out {}".format(file, filePath, famFolder, famFolder, outputName))
-
-with concurrent.futures.ProcessPoolExecutor(max_workers=numCores) as executor:
-    executor.map(createPlink, plinkFileList)
-
+plinkFileList = list(plinkFileSet)
+plinkFileList.sort()
+for file in plinkFileList:
+    outputName = re.findall(r"([\w/_\-]+chr[0-9XY][0-9XY]?)", file)[0]
+    if famFile != None:
+        os.system("/plink2 --vcf {} --fam {} --make-bed --out {}".format(file, famFile, outputName))
+    else:
+        os.system("/plink2 --vcf {} --make-bed --out {}".format(file, outputName))
 
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print('{}Trios have been separated by chromosome. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
+print('{}File has been separated by chromosome. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
