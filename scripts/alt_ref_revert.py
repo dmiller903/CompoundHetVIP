@@ -1,126 +1,119 @@
-import glob
-import gzip
-import re
-from sys import argv
 import os
+import time
+import argparse
+import re
+import gzip
+import glob
+#Keep track of when the script began
+startTime = time.time()
+char = '\n' + ('*' * 70) + '\n'
 
-inputFile = argv[1]
-pathToFiles = argv[2]
+# Argparse Information
+parser = argparse.ArgumentParser(description="Phased results can have the REF and ALT alleles switched as compared \
+to the reference genome. We are unsure exactly why this occurs. For files with trios, it may be that since each file \
+only has 3 samples, the ALT allele is more common in the trio and becomes the REF. This step ensures that the REF/ALT \
+alleles of the phased VCF files are congruent with the REF/ALT of the reference genome. In addition, sites with Mendel \
+errors are removed.")
 
-fileDict = dict()
-if inputFile.endswith(".vcf"):
-    fileDict["1"] = {inputFile}
+parser.add_argument('input_vcf', help='Input file')
+parser.add_argument('output_file', help='Name of output file')
+parser.add_argument('chromosome_number', help='Chromosome number is needed so the script can determine which reference \
+file to use.')
 
-elif inputFile.endswith(".txt"):
-    with open(inputFile) as sampleFile:
-        for sample in sampleFile:
-            sample = sample.rstrip("\n")
-            fileDict.add(sample)
+args = parser.parse_args()
 
-elif inputFile.endswith(".tsv"):
-    with open(inputFile) as sampleFile:
-            header = sampleFile.readline()
-            headerList = header.rstrip().split("\t")
-            fileNameIndex = headerList.index("file_name")
-            familyIdIndex = headerList.index("family_id")
-            sampleIdIndex = headerList.index("sample_id")
-            chromosomes = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13",\
-    "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22"}
-            for sample in sampleFile:
-                sampleData = sample.rstrip("\n").split("\t")
-                fileName = sampleData[fileNameIndex]
-                sampleFamilyId = sampleData[familyIdIndex]
-                sampleId = sampleData[sampleIdIndex]
-                if sampleFamilyId not in fileDict:
-                    fileDict[sampleFamilyId] = set()
-                    for chromosome in chromosomes:
-                        #individualFileName = "{}/{}/{}/{}_{}".format(pathToFiles, sampleFamilyId, sampleId, sampleId, chromosome)
-                        trioFileName = "{}/{}/{}_trio/{}_trio_{}_phased.vcf".format(pathToFiles, sampleFamilyId, sampleFamilyId, sampleFamilyId, chromosome)
-                        #fileDict.add(individualFileName)
-                        fileDict[sampleFamilyId].add(trioFileName)
+#Create variables of each argument from argparse
+inputFile = args.input_vcf
+outputFile = args.output_file
+chromosome = args.chromosome_number
+tempFile = "/tmp/" + re.findall(r'/?([\w\-_\.]+)', outputFile)[-1]
 
 posDict = dict()
 for file in glob.glob("/references/1000GP_Phase3/*legend.gz"):
-    with gzip.open(file, 'rt') as legend:
-        chrom = re.findall(r"[\w_/]+_chr([0-9]+)\.legend\.gz", file)[0]
-        header = legend.readline()
-        headerList = header.rstrip().split()
-        refIndex = headerList.index("a0")
-        altIndex = headerList.index("a1")
-        posIndex = headerList.index("position")
-        idIndex = headerList.index("id")
-        for line in legend:
-            lineList = line.rstrip().split(" ")
-            pos = lineList[posIndex]
-            ref = lineList[refIndex]
-            alt = lineList[altIndex]
-            siteStr = "{} {} {}".format(pos, ref, alt)
-            if chrom not in posDict:
-                posDict[chrom] = {siteStr}
-            else:
-                posDict[chrom].add(siteStr)
+    if file == f"/references/1000GP_Phase3/1000GP_Phase3_chr{chromosome}.legend.gz":
+        with gzip.open(file, 'rt') as reference:
+            header = reference.readline()
+            headerList = header.rstrip().split()
+            refIndex = headerList.index("a0")
+            altIndex = headerList.index("a1")
+            posIndex = headerList.index("position")
+            idIndex = headerList.index("id")
+            for line in reference:
+                lineList = line.rstrip().split(" ")
+                pos = lineList[posIndex]
+                ref = lineList[refIndex]
+                alt = lineList[altIndex]
+                siteStr = "{} {} {}".format(pos, ref, alt)
+                if chromosome not in posDict:
+                    posDict[chromosome] = {siteStr}
+                else:
+                    posDict[chromosome].add(siteStr)
 
 print("Dictionary Created\n")
 
-for key, value in fileDict.items():
-    for file in value:
-        rawCount = 0
-        flipCount = 0
-        total = 0
-        mendelErrorCount = 0
-        fileNameNoSuffix = re.findall(r"([\w\-\/_]+\/[\w\-_]+_chr[A-Z0-9][A-Z0-9]?[_\w]*_phased)\.vcf", file)[0]
-        outputName = "{}_reverted.vcf".format(fileNameNoSuffix)
-        mendelErrorFile = "{}.snp.me".format(fileNameNoSuffix)
-        mendelErrorSet = set()
-        # Create a set of any positions with mendel errors as given by the shapeit2 .snp.me files
-        if os.path.exists(mendelErrorFile):
-            with open(mendelErrorFile) as mendelFile:
-                for line in mendelFile:
-                    lineSplit = line.split("\t")
-                    mendelError = lineSplit[2]
-                    pos = lineSplit[1]
-                    if mendelError == "1":
-                        mendelErrorSet.add(pos)
+mendelErrorCount = 0
+fileWithoutSuffix = re.findall(r'([\w\-_/]+)\.', inputFile)[0]
+mendelErrorFile = "{}.snp.me".format(fileWithoutSuffix)
+mendelErrorSet = set()
+# Create a set of any positions with mendel errors as given by the shapeit2 .snp.me files
+if os.path.exists(mendelErrorFile):
+    with open(mendelErrorFile) as mendelFile:
+        for line in mendelFile:
+            lineSplit = line.split("\t")
+            mendelError = lineSplit[2]
+            pos = lineSplit[1]
+            if mendelError == "1":
+                mendelErrorSet.add(pos)
 
-        with open(file, 'rt') as sample, open(outputName, 'w') as output:
-            for line in sample:
-                if "##" in line:
-                    output.write(line)
-                elif line.startswith("#CHROM"):
-                    header = line.split("\t")
-                    chromIndex = header.index("#CHROM")
-                    posIndex = header.index("POS")
-                    refIndex = header.index("REF")
-                    altIndex = header.index("ALT")
-                    output.write(line)
-                else:
-                    lineList = line.split("\t")
-                    chrom = lineList[chromIndex]
-                    pos = lineList[posIndex]
-                    ref = lineList[refIndex]
-                    alt = lineList[altIndex]
-                    rawStr = "{} {} {}".format(pos, ref, alt)
-                    flipStr = "{} {} {}".format(pos, alt, ref)
-                    if rawStr in posDict[chrom] and pos not in mendelErrorSet:
-                        output.write(line)
-                        rawCount += 1
-                        total += 1
-                    elif flipStr in posDict[chrom] and pos not in mendelErrorSet:
-                        lineList[refIndex] = alt
-                        lineList[altIndex] = ref
-                        line = "\t".join(lineList)
-                        line = line.replace("0|1", "b|a").replace("1|0", "a|b").replace("1|1", "a|a").replace("0|0", "b|b")
-                        line = line.replace("b|a", "1|0").replace("a|b", "0|1").replace("a|a", "0|0").replace("b|b", "1|1")
-                        output.write(line)
-                        flipCount += 1
-                        total += 1
-                    else:
-                        total += 1
-                        mendelErrorCount += 1
-            rawPercent = (rawCount / total) * 100
-            flipPercent = (flipCount / total) * 100
-            totalPercent = ((flipCount + rawCount) / total) * 100
-            print("For {}, chr{}, {} ({:.2f}%) of the sites were unchanged".format(key, chrom, rawCount, rawPercent))
-            print("For {}, chr{}, {} ({:.2f}%) of the sites were switched to match the reference panel".format(key, chrom, flipCount, flipPercent))
-            print("For {}, chr{}, {:.2f}% of the sites are now congruent with the reference panel\n".format(key, chrom, totalPercent))
-            print("For {}, chr{}, {} sites were removed due to mendel errors\n".format(key, chrom, mendelErrorCount))
+# Flip alt and ref, and remove mendel errors if shapeit2 was used to phase
+rawCount = 0
+flipCount = 0
+total = 0
+with gzip.open(inputFile, 'rt') as sample, open(tempFile, 'wt') as output:
+    for line in sample:
+        if "##" in line:
+            output.write(line)
+        elif line.startswith("#CHROM"):
+            header = line.split("\t")
+            chromIndex = header.index("#CHROM")
+            posIndex = header.index("POS")
+            refIndex = header.index("REF")
+            altIndex = header.index("ALT")
+            output.write(line)
+        else:
+            lineList = line.split("\t")
+            chrom = lineList[chromIndex]
+            pos = lineList[posIndex]
+            ref = lineList[refIndex]
+            alt = lineList[altIndex]
+            rawStr = "{} {} {}".format(pos, ref, alt)
+            flipStr = "{} {} {}".format(pos, alt, ref)
+            if rawStr in posDict[chrom] and pos not in mendelErrorSet:
+                output.write(line)
+                rawCount += 1
+                total += 1
+            elif flipStr in posDict[chrom] and pos not in mendelErrorSet:
+                lineList[refIndex] = alt
+                lineList[altIndex] = ref
+                line = "\t".join(lineList)
+                line = line.replace("0|1", "b|a").replace("1|0", "a|b").replace("1|1", "a|a").replace("0|0", "b|b")
+                line = line.replace("b|a", "1|0").replace("a|b", "0|1").replace("a|a", "0|0").replace("b|b", "1|1")
+                output.write(line)
+                flipCount += 1
+                total += 1
+            else:
+                total += 1
+                mendelErrorCount += 1
+
+rawPercent = (rawCount / total) * 100
+flipPercent = (flipCount / total) * 100
+totalPercent = ((flipCount + rawCount) / total) * 100
+if (flipCount + rawCount) == total:
+    print("For {}, chr{}, {} ({:.2f}%) of the sites were unchanged. No outputFile was generated.".format(inputFile, chromosome, rawCount, rawPercent))
+else:
+    os.system("/root/miniconda2/bin/bgzip {}".format(tempFile))
+    os.system(f"mv {tempFile}.gz {outputFile}.gz")
+    print("For {}, chr{}, {} ({:.2f}%) of the sites were unchanged".format(inputFile, chromosome, rawCount, rawPercent))
+    print("For {}, chr{}, {} ({:.2f}%) of the sites were switched to match the reference panel".format(inputFile, chromosome, flipCount, flipPercent))
+    print("For {}, chr{}, {:.2f}% of the sites are now congruent with the reference panel\n".format(inputFile, chromosome, totalPercent))
+    print("For {}, chr{}, {} sites were removed due to mendel errors\n".format(inputFile, chromosome, mendelErrorCount))
