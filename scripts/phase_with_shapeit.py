@@ -44,3 +44,4 @@ else:
     
 os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -convert --input-haps {} \
 --output-log {}_vcf.log --output-vcf {}.vcf".format(outputFile, outputFile, outputFile))
+os.system(f"bgzip -f {outputFile}.vcf")
