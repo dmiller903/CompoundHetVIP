@@ -9,109 +9,84 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description="Phased results can have the REF and ALT alleles switched as compared \
-to the reference genome. We are unsure exactly why this occurs. For files with trios, it may be that since each file \
-only has 3 samples, the ALT allele is more common in the trio and becomes the REF. This step ensures that the REF/ALT \
-alleles of the phased VCF files are congruent with the REF/ALT of the reference genome. In addition, sites with Mendel \
-errors are removed.")
+parser = argparse.ArgumentParser(description="To make subsequent analysis of the phased files easier, this step \
+concatenates all phased chromosomes into a single file, then merges different concatenated samples into a single file")
 
-parser.add_argument('input_vcf', help='Input file')
+
+parser.add_argument('phased_files_path', help='A path where all the phased files are stored. Only phased files from \
+a single phasing method should be in this folder.')
 parser.add_argument('output_file', help='Name of output file')
-parser.add_argument('chromosome_number', help='Chromosome number is needed so the script can determine which reference \
-file to use.')
+parser.add_argument('--output_fam_file', help='Name of output fam file if fam files are included in the "phased_files_path"')
 
 args = parser.parse_args()
 
 #Create variables of each argument from argparse
-inputFile = args.input_vcf
+filePath = args.phased_files_path
 outputFile = args.output_file
-chromosome = args.chromosome_number
-tempFile = "/tmp/" + re.findall(r'/?([\w\-_\.]+)', outputFile)[-1]
+if filePath.endswith("/"):
+    filePath = filePath[0:-1]
+famOutput = args.output_fam_file
 
-def concatMerge(trio):
-    files = fileDict[trio]
+# Create a nested Dictionary where the key is the sample ID, and the value is a dictionary where the key is the chromosome
+# number and the value is the file name
+nestedDict = {}
+for file in glob.glob(f"{filePath}/*.gz"):
+    firstSample = ""
+    chromosome = ""
 
-    for index, file in enumerate(files):
-        #os.system("gzip -d {}.gz".format(file))
-        os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(file, file))
-        files[index] = "{}.gz".format(file)
+    with gzip.open(file, 'rt') as phasedFile:
+        for line in phasedFile:
+            if "##" in line:
+                continue
+            if "#CHROM" in line:
+                lineList = line.rstrip().split("\t")
+                firstSample = lineList[9]
+            else:
+                lineList = line.rstrip().split("\t")
+                if lineList[0].isnumeric():
+                    chromosome = lineList[0]
+                    break
+        if firstSample not in nestedDict:
+            nestedDict[firstSample] = {chromosome: file}
+        else:
+            nestedDict[firstSample][chromosome] = file
 
+# Create a dictionary where the key is the sample ID and the value  is a list (in chromosome order) of files to concat
+filesToConcat = {}
+for key, value in nestedDict.items():
+    filesToConcat[key] = []
+    for key2, value2 in sorted(value.items()):
+        filesToConcat[key].append(value2)
 
-    fileName = re.findall(r"([\w\-\/_]+\/[\w\-_]+)_chr[A-Z0-9][A-Z0-9]?_phased_reverted\.vcf", files[0])[0]
-    outputName = "{}_phased_combined.vcf".format(fileName)
-    files = " ".join(files)
-    os.system("bcftools concat {} -o {}".format(files, outputName))
-    os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputName, outputName))
+# concatenate chromosome files into single files ordered by chromosome number
+concatFiles = []
+for key, value in filesToConcat.items():
+    for file in value:
+        os.system("tabix -fp vcf {}".format(file, file))
+    tempOutput = "/tmp/{}_phased_combined.vcf".format(key)
+    files = " ".join(value)
+    os.system("bcftools concat {} -o {}".format(files, tempOutput))
+    os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(tempOutput, tempOutput))
+    concatFiles.append(f'{tempOutput}.gz')
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=35) as executor:
-    executor.map(concatMerge, fileDict)
-
-# Merge all phased, concatenated, trio files into one    
+# Merge all phased, concatenated, files into one
 concatFilesString = " ".join(concatFiles)
-outputName = "{}/{}_phased_samples.vcf".format(pathToFiles, diseaseName)
-os.system("bcftools merge -m both {} -o {}".format(concatFilesString, outputName))
-os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputName, outputName))
+os.system("bcftools merge -m both {} -o {}".format(concatFilesString, outputFile))
+os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputFile, outputFile))
 
 # Create a merged family file
-# create a proband dictionary where the key is the sampleId and the value is the familyId
-# also create a parent dictionary where the key is familyId and the value is a dictionary that has a key of the sampleId and value of gender
-probandDict = {}
-parentDict = {}
-with open(inputFile) as sampleFile:
-    header = sampleFile.readline()
-    headerList = header.rstrip().split("\t")
-    fileNameIndex = headerList.index("file_name")
-    familyIdIndex = headerList.index("family_id")
-    sampleIdIndex = headerList.index("sample_id")
-    probandIndex = headerList.index("proband")
-    genderIndex = headerList.index("sex")
-    for sample in sampleFile:
-        sampleData = sample.rstrip("\n").split("\t")
-        fileName = sampleData[fileNameIndex]
-        sampleFamilyId = sampleData[familyIdIndex]
-        sampleId = sampleData[sampleIdIndex]
-        probandStatus = sampleData[probandIndex]
-        gender = sampleData[genderIndex]
-        if probandStatus == "Yes":
-            probandDict[sampleId] = sampleFamilyId
-        else:
-            if sampleFamilyId not in parentDict:
-                parentDict[sampleFamilyId] = {sampleId: gender}
-            else:
-                parentDict[sampleFamilyId][sampleId] = gender
-
 # Create a dictionary where each sample has the rest of the family information needed for the family file
 sampleDict = dict()
-with open(inputFile) as sampleFile:
-    header = sampleFile.readline()
-    headerList = header.rstrip().split("\t")
-    fileNameIndex = headerList.index("file_name")
-    familyIdIndex = headerList.index("family_id")
-    sampleIdIndex = headerList.index("sample_id")
-    probandIndex = headerList.index("proband")
-    genderIndex = headerList.index("sex")
-    for sample in sampleFile:
-        sampleData = sample.rstrip("\n").split("\t")
-        fileName = sampleData[fileNameIndex]
-        sampleFamilyId = sampleData[familyIdIndex]
-        sampleId = sampleData[sampleIdIndex]
-        probandStatus = sampleData[probandIndex]
-        gender = sampleData[genderIndex]
-        paternal = ""
-        maternal = ""
-        if probandStatus == "Yes":
-            familyDict = parentDict[sampleFamilyId]
-            for key, value in familyDict.items():
-                if value == "1":
-                    paternal = key
-                else:
-                    maternal = key
-            sampleDict[sampleId] = "{}\t{}\t{}\t{}\t{}\t2\n".format(sampleFamilyId, sampleId, paternal, maternal, gender)
-        else:
-            sampleDict[sampleId] = "{}\t{}\t0\t0\t{}\t1\n".format(sampleFamilyId, sampleId, gender)
-            
+for file in glob.glob(f"{filePath}/*.fam"):
+    with open(file) as famFile:
+        for line in famFile:
+            lineList = line.rstrip().split()
+            sampleId = lineList[1]
+            sampleDict[sampleId] = "\t".join(lineList) + "\n"
+
 # create a sample list in the order of the vcf file
-with gzip.open("{}/{}_phased_samples.vcf.gz".format(pathToFiles, diseaseName), "rt") as vcfFile:
+sampleList = []
+with gzip.open(f"{outputFile}.gz", "rt") as vcfFile:
     for line in vcfFile:
         if line.startswith("##"):
             continue
@@ -121,6 +96,6 @@ with gzip.open("{}/{}_phased_samples.vcf.gz".format(pathToFiles, diseaseName), "
             break
 
 # use the sample order in the list to output each sample in order as found in the vcf file
-with open("{}/{}.fam".format(pathToFiles, diseaseName), "w") as outputFile:
+with open(famOutput, "w") as output:
     for sample in sampleList:
-        outputFile.write(sampleDict[sample])
+        output.write(sampleDict[sample])

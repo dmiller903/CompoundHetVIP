@@ -7,7 +7,7 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description='Creates a combined trio file using GATKs "CombineGVCFs"  and GenotypeGVCFs \
+parser = argparse.ArgumentParser(description='Creates a combined trio file using GATKs "CombineGVCFs" and GenotypeGVCFs \
 tools')
 
 parser.add_argument('proband_vcf', help='Proband VCF File')
