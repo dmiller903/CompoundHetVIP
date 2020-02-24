@@ -1,2 +1,0 @@
-#!/bin/bash
-gemini load -v idiopathic_scoliosis/gVCF/idiopathic_scoliosis_phased_samples_annotated.vcf -p /proj/idiopathic_scoliosis/gVCF/idiopathic_scoliosis.fam -t snpEff --cores 42 /proj/idiopathic_scoliosis/gVCF/idiopathic_scoliosis_phased_samples_annotated_cadd.db

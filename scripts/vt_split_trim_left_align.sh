@@ -1,2 +1,0 @@
-#!/bin/bash
-/root/miniconda2/bin/vt decompose -s idiopathic_scoliosis/gVCF/idiopathic_scoliosis_phased_samples.vcf.gz | /root/miniconda2/bin/vt normalize -n -r /references/human_g1k_v37.fasta - > idiopathic_scoliosis/gVCF/idiopathic_scoliosis_phased_samples_vt.vcf
