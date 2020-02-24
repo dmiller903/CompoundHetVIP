@@ -17,6 +17,8 @@ parser.add_argument('phased_files_path', help='A path where all the phased files
 a single phasing method should be in this folder.')
 parser.add_argument('output_file', help='Name of output file')
 parser.add_argument('--output_fam_file', help='Name of output fam file if fam files are included in the "phased_files_path"')
+parser.add_argument('--merge_files', help='If multiple files need to be merged after chromosomes are combined, please indicate by "y"', \
+default="n")
 
 args = parser.parse_args()
 
@@ -26,6 +28,7 @@ outputFile = args.output_file
 if filePath.endswith("/"):
     filePath = filePath[0:-1]
 famOutput = args.output_fam_file
+mergeFiles = args.merge_files
 
 # Create a nested Dictionary where the key is the sample ID, and the value is a dictionary where the key is the chromosome
 # number and the value is the file name
@@ -47,9 +50,18 @@ for file in glob.glob(f"{filePath}/*.gz"):
                     chromosome = lineList[0]
                     break
         if firstSample not in nestedDict:
-            nestedDict[firstSample] = {chromosome: file}
+            if len(chromosome) == 1:
+                chromosome = "0" + chromosome
+                nestedDict[firstSample] = {chromosome: file}
+            else:
+                nestedDict[firstSample] = {chromosome: file}
         else:
-            nestedDict[firstSample][chromosome] = file
+            if len(chromosome) == 1:
+                chromosome = "0" + chromosome
+                nestedDict[firstSample][chromosome] = file
+            else:
+                nestedDict[firstSample][chromosome] = file
+
 
 # Create a dictionary where the key is the sample ID and the value  is a list (in chromosome order) of files to concat
 filesToConcat = {}
@@ -58,6 +70,7 @@ for key, value in nestedDict.items():
     for key2, value2 in sorted(value.items()):
         filesToConcat[key].append(value2)
 
+print(filesToConcat)
 # concatenate chromosome files into single files ordered by chromosome number
 concatFiles = []
 for key, value in filesToConcat.items():
@@ -70,9 +83,12 @@ for key, value in filesToConcat.items():
     concatFiles.append(f'{tempOutput}.gz')
 
 # Merge all phased, concatenated, files into one
-concatFilesString = " ".join(concatFiles)
-os.system("bcftools merge -m both {} -o {}".format(concatFilesString, outputFile))
-os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputFile, outputFile))
+if mergeFiles == "y":
+    concatFilesString = " ".join(concatFiles)
+    os.system("bcftools merge -m both {} -o {}".format(concatFilesString, outputFile))
+    os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputFile, outputFile))
+elif mergeFiles == "n":
+    os.system(f"mv {tempOutput}.gz {outputFile}.gz")
 
 # Create a merged family file
 # Create a dictionary where each sample has the rest of the family information needed for the family file

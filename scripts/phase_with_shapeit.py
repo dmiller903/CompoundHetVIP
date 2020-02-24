@@ -17,6 +17,8 @@ parser.add_argument('input_vcf', help='Input file (without suffix)')
 parser.add_argument('output_file', help='Name of output file (without suffix)')
 parser.add_argument('chromosome_number', help='Shapeit phases chromosome by chromsome, so it needs to be known which \
 chromosome to phase')
+parser.add_argument('--is_trio', help='If the VCF files are trios, and you would like to take family relationships \
+into consideration, use family phasing by indicating "y".', default='n')
 
 args = parser.parse_args()
 
@@ -24,23 +26,43 @@ args = parser.parse_args()
 inputFile = args.input_vcf
 outputFile = args.output_file
 chromosome = 'chr' + args.chromosome_number
+trio = args.is_trio
 
-os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -check -B {} --output-log {}_check \
--M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
---input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
-/references/1000GP_Phase3/1000GP_Phase3.sample --thread 3".format(inputFile, outputFile, chromosome, chromosome, chromosome))
-if os.path.exists("{}_check.snp.strand.exclude".format(outputFile)):
-    os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} --output-log {}.log -O {} \
+if trio == "y":
+    os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -check -B {} --output-log {}_check \
     -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
     --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
-    /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --exclude-snp {}_check.snp.strand.exclude \
-    --force --seed 123456789".format(inputFile, outputFile, outputFile, chromosome, chromosome, chromosome, outputFile))
-else:
-    os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} --output-log {}.log -O {} \
+    /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3".format(inputFile, outputFile, chromosome, chromosome, chromosome))
+    if os.path.exists("{}_check.snp.strand.exclude".format(outputFile)):
+        os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} --output-log {}.log -O {} \
+        -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+        --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
+        /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --exclude-snp {}_check.snp.strand.exclude \
+        --force --seed 123456789".format(inputFile, outputFile, outputFile, chromosome, chromosome, chromosome, outputFile))
+    else:
+        os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {} --output-log {}.log -O {} \
+        -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+        --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
+        /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc \
+        --force --seed 123456789".format(inputFile, outputFile, outputFile, chromosome, chromosome, chromosome))
+
+elif trio == "n":
+    os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -check -V {} --output-log {}_check \
     -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
     --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
-    /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc \
-    --force --seed 123456789".format(inputFile, outputFile, outputFile, chromosome, chromosome, chromosome))
+    /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3".format(inputFile, outputFile, chromosome, chromosome, chromosome))
+    if os.path.exists("{}_check.snp.strand.exclude".format(outputFile)):
+        os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -V {} --output-log {}.log -O {} \
+        -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+        --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
+        /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --exclude-snp {}_check.snp.strand.exclude \
+        --force --seed 123456789".format(inputFile, outputFile, outputFile, chromosome, chromosome, chromosome, outputFile))
+    else:
+        os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -V {} --output-log {}.log -O {} \
+        -M /references/1000GP_Phase3/genetic_map_{}_combined_b37.txt \
+        --input-ref /references/1000GP_Phase3/1000GP_Phase3_{}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{}.legend.gz \
+        /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc \
+        --force --seed 123456789".format(inputFile, outputFile, outputFile, chromosome, chromosome, chromosome))
     
 os.system("/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -convert --input-haps {} \
 --output-log {}_vcf.log --output-vcf {}.vcf".format(outputFile, outputFile, outputFile))
