@@ -39,17 +39,42 @@ with gzip.open(inputFile, "rt") as vcf:
             header = header + line
         elif not line.startswith("#") and line.split("\t")[0] not in chromosomeSet:
             chromosomeNumber = line.split("\t")[0]
-            if (chromosomeNumber.isnumeric() and int(chromosomeNumber) in range(0,23)) or (chromosomeNumber.isalpha() and str(chromosomeNumber) in ["X", "Y"]):
-                with open("{}chr{}.vcf".format(outputName, chromosomeNumber), "w") as chromosome:
-                    chromosome.write(header)
-                    chromosome.write(line)
-                    chromosomeSet.add(chromosomeNumber)
-                    plinkFileSet.add("{}chr{}.vcf".format(outputName, chromosomeNumber))
+            if chromosomeNumber.startswith("c"):
+                chromosomeNumber = chromosomeNumber[3:]
+                if (chromosomeNumber.isnumeric() and int(chromosomeNumber) in range(0,23)) or (chromosomeNumber.isalpha() and str(chromosomeNumber) in ["X", "Y"]):
+                    with open("{}chr{}.vcf".format(outputName, chromosomeNumber), "w") as chromosome:
+                        chromosome.write(header)
+                        lineList = line.split("\t")
+                        updateChromosome = lineList[0]
+                        updateChromosome = updateChromosome[3:]
+                        lineList[0] = updateChromosome
+                        line = " ".join(lineList)
+                        chromosome.write(line)
+                        chromosomeSet.add(chromosomeNumber)
+                        plinkFileSet.add("{}chr{}.vcf".format(outputName, chromosomeNumber))
+                else:
+                    break
             else:
-                break
+                if (chromosomeNumber.isnumeric() and int(chromosomeNumber) in range(0,23)) or (chromosomeNumber.isalpha() and str(chromosomeNumber) in ["X", "Y"]):
+                    with open("{}chr{}.vcf".format(outputName, chromosomeNumber), "w") as chromosome:
+                        chromosome.write(header)
+                        chromosome.write(line)
+                        chromosomeSet.add(chromosomeNumber)
+                        plinkFileSet.add("{}chr{}.vcf".format(outputName, chromosomeNumber))
+                else:
+                    break
         else:
-            with open("{}chr{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
-                chromosome.write(line)
+            if chromosomeNumber.startswith("c"):
+                with open("{}chr{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
+                    lineList = line.split("\t")
+                    updateChromosome = lineList[0]
+                    updateChromosome = updateChromosome[3:]
+                    lineList[0] = updateChromosome
+                    line = " ".join(lineList)
+                    chromosome.write(line)
+            else:
+                with open("{}chr{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
+                    chromosome.write(line)
 
 #Create bed, bim files for each chromosome of each trio
 plinkFileList = list(plinkFileSet)
