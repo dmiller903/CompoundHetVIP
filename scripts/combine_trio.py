@@ -14,6 +14,8 @@ parser.add_argument('proband_vcf', help='Proband VCF File')
 parser.add_argument('parent_1_vcf', help='Maternal or Paternal VCF File of Proband')
 parser.add_argument('parent_2_vcf', help='Maternal or Paternal VCF File of Proband')
 parser.add_argument('output_vcf', help='Path and name of combined vcf output file')
+parser.add_argument('--is_gvcf', help="If a gVCF file is used, GATK's combineGVCFs will be used. If VCF files are used \
+bcftools merge will be used", default='y')
 
 args = parser.parse_args()
 
@@ -22,17 +24,26 @@ probandFile = args.proband_vcf
 parent1File = args.parent_1_vcf
 parent2File = args.parent_2_vcf
 outputName = args.output_vcf
+isGvcf = args.is_gvcf
 
 # Use GATK to combine all trios into one vcf and then genotype the combined trio vcf
 files = [probandFile, parent1File, parent2File]
-fileString = ""
 tempName = "/tmp/temp.vcf"
-for file in files:
-    fileString += "-V {} ".format(file)
-    os.system("/root/miniconda2/bin/gatk IndexFeatureFile -F {}".format(file))
-os.system("/root/miniconda2/bin/gatk CombineGVCFs -R /references/Homo_sapiens_assembly38.fasta {} -O {}".format(fileString, tempName))
-os.system("gatk IndexFeatureFile -F {}".format(tempName))
-os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O {}'.format(tempName, outputName))
+if isGvcf == "y":
+    fileString = ""
+    for file in files:
+        fileString += "-V {} ".format(file)
+        os.system("/root/miniconda2/bin/gatk IndexFeatureFile -F {}".format(file))
+    os.system("/root/miniconda2/bin/gatk CombineGVCFs -R /references/Homo_sapiens_assembly38.fasta {} -O {}".format(fileString, tempName))
+    os.system("gatk IndexFeatureFile -F {}".format(tempName))
+    os.system('gatk --java-options "-Xmx4g" GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {} -O {}'.format(tempName, outputName))
+
+elif isGvcf == "n":
+    for file in files:
+        os.system("tabix -fp vcf {}".format(file))
+    fileString = " ".join(files)
+    os.system("bcftools concat {} -o {}".format(fileString, tempName))
+    os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(tempName, tempName))
 
 #Print message and how long the previous steps took
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
