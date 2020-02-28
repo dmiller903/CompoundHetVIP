@@ -75,7 +75,7 @@ print(filesToConcat)
 concatFiles = []
 for key, value in filesToConcat.items():
     for file in value:
-        os.system("tabix -fp vcf {}".format(file, file))
+        os.system("tabix -fp vcf {}".format(file))
     tempOutput = "/tmp/{}_phased_combined.vcf".format(key)
     files = " ".join(value)
     os.system("bcftools concat {} -o {}".format(files, tempOutput))
