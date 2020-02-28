@@ -24,7 +24,7 @@ outputFile = args.output_vcf
 fileWithoutSuffix = re.findall(r'([\w\-_/]+)\.', outputFile)[0]
 
 #Liftover file(s)
-os.system("java -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I={} O={}.gz \
+os.system("java -Xmx12G -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I={} O={}.gz \
 CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={}_rejected_variants.vcf".format(inputFile, outputFile, fileWithoutSuffix))
 
 #Output message and time complete
