@@ -42,8 +42,8 @@ elif isGvcf == "n":
     for file in files:
         os.system("tabix -fp vcf {}".format(file))
     fileString = " ".join(files)
-    os.system("bcftools merge {} -o {}".format(fileString, tempName))
-    os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(tempName, tempName))
+    os.system("bcftools merge {} -o {}".format(fileString, outputName))
+    os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputName, outputName))
 
 #Print message and how long the previous steps took
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
