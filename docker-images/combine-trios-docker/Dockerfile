@@ -25,6 +25,10 @@ apt-get update \
   && rm /references.zip \
   && gzip -d /references/*.gz \
   # Install GATK4
-  && conda install -c bioconda gatk4=4.0.5.1
+  && conda install -c bioconda gatk4=4.0.5.1 \
+  # Install bcftools
+  && conda install -c bioconda bcftools=1.9 \
+  # Install samtools
+  && conda install -c bioconda samtools=1.9
 ENV \
   PATH=${PATH}:/root/miniconda2/bin/
