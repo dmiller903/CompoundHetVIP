@@ -21,7 +21,9 @@ parser.add_argument('output_path', help='Path to where output files should go')
 parser.add_argument('--parent_1_gVCF', help='Maternal or Paternal File of Sample')
 parser.add_argument('--parent_2_gVCF', help='Maternal or Paternal File of Sample')
 parser.add_argument('--output_suffix', help='Suffix for each output file (do not include .gz at end as this will be included \
-when the file is bgzipped', default='_variant_sites.vcf')
+when the file is bgzipped', default='_parsed.vcf')
+parser.add_argument('--is_gvcf', help='If a gVCF file is used, all non-variant sites will be filtered out of the sample file \
+and a new VCF will be created', default='y')
 
 args = parser.parse_args()
 
@@ -30,40 +32,56 @@ sampleFile = args.sample_gVCF
 parent1File = args.parent_1_gVCF
 parent2File = args.parent_2_gVCF
 outputPath = args.output_path
+isGvcf = args.is_gvcf
 if outputPath.endswith("/"):
     outputPath = outputPath[0:-1]
 outputSuffix = args.output_suffix
 
 #Filter each sample file, remove  variants-only sites, create a dictionary of variant-only sites
-fileName = re.findall(r'/?([\w\-_]+)\.g\.vcf\.gz', sampleFile)[0]
+fileName = re.findall(r'/?([\w\-_]+)\.?g?\.vcf\.gz', sampleFile)[0]
 outputName = "{}/{}{}".format(outputPath, fileName, outputSuffix)
 positionDict = {}
-with gzip.open(sampleFile, 'rt') as gVCF, gzip.open(outputName, 'wb') as parsed:
-    for line in gVCF:
-        if line.startswith('#'):
-            parsed.write(line.encode())
-        elif "END" not in line:
-            parsed.write(line.encode())
-            line = line.split("\t")
-            chrom = line[0]
-            pos = line[1]
-            if chrom not in positionDict:
-                positionDict[chrom] = {pos}
-            else:
-                positionDict[chrom].add(pos)
-#bgzip file
-os.system("zcat {} | /root/miniconda2/bin/bgzip > {}.gz".format(outputName, outputName))
-os.system(f"rm {outputName}")
+if isGvcf == "y":
+    with gzip.open(sampleFile, 'rt') as gVCF, gzip.open(outputName, 'wb') as parsed:
+        for line in gVCF:
+            if line.startswith('#'):
+                parsed.write(line.encode())
+            elif "END" not in line:
+                parsed.write(line.encode())
+                line = line.split("\t")
+                chrom = line[0]
+                pos = line[1]
+                if chrom not in positionDict:
+                    positionDict[chrom] = {pos}
+                else:
+                    positionDict[chrom].add(pos)
+    #bgzip file
+    os.system("zcat {} | /root/miniconda2/bin/bgzip > {}.gz".format(outputName, outputName))
+    os.system(f"rm {outputName}")
 
-#Print message and how long the previous steps took
-timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
-timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print('Non-variant sites have been removed from sample file. Time elapsed: {} minutes ({} hours)'.format(timeElapsedMinutes, timeElapsedHours))
+    #Print message and how long the previous steps took
+    timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
+    timeElapsedHours = round(timeElapsedMinutes / 60, 2)
+    print('Non-variant sites have been removed from sample file. Time elapsed: {} minutes ({} hours)'.format(timeElapsedMinutes, timeElapsedHours))
+elif isGvcf == "n":
+    with gzip.open(sampleFile, 'rt') as gVCF:
+        for line in gVCF:
+            if line.startswith('#'):
+                continue
+            else:
+                line = line.split("\t")
+                chrom = line[0]
+                pos = line[1]
+                if chrom not in positionDict:
+                    positionDict[chrom] = {pos}
+                else:
+                    positionDict[chrom].add(pos)
+
 
 #Filter each parent file for sites that occur in sample of that family
 if parent1File != None and parent2File != None:
     def filterParents(file):
-        fileName = re.findall(r'/?([\w\-_]+)\.g\.vcf\.gz', file)[0]
+        fileName = re.findall(r'/?([\w\-_]+)\.?g?\.vcf\.gz', file)[0]
         outputName = "{}/{}{}".format(outputPath, fileName, outputSuffix)
         with gzip.open(file, 'rt') as gVCF, gzip.open(outputName, 'wb') as parsed:
             for line in gVCF:
