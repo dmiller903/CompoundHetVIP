@@ -42,7 +42,7 @@ with gzip.open(inputFile, "rt") as vcf:
             if (chromosomeNumber[3:].isnumeric() and int(chromosomeNumber[3:]) in range(0,23)) or (chromosomeNumber[3:].isalpha() and str(chromosomeNumber[3:]) in ["X", "Y"]):
                 with gzip.open("{}{}.vcf".format(outputName, chromosomeNumber), "wb") as chromosome:
                     chromosome.write(header.encode())
-                    chromosome.write(line.encoode())
+                    chromosome.write(line.encode())
                     chromosomeSet.add(chromosomeNumber)
                     plinkFileSet.add("{}{}.vcf.gz".format(outputName, chromosomeNumber))
             else:
