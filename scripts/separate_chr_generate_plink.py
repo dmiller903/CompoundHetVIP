@@ -64,7 +64,7 @@ with gzip.open(inputFile, "rt") as vcf:
                 else:
                     break
         else:
-            if chromosomeNumber.startswith("c"):
+            if line.split("\t")[0].startswith("c"):
                 with open("{}chr{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
                     lineList = line.split("\t")
                     updateChromosome = lineList[0]
@@ -78,7 +78,6 @@ with gzip.open(inputFile, "rt") as vcf:
 
 #Create bed, bim files for each chromosome of each trio
 plinkFileList = list(plinkFileSet)
-print(plinkFileList)
 plinkFileList.sort()
 for file in plinkFileList:
     outputName = re.findall(r"([\w/_\-]+chr[0-9XY][0-9XY]?)", file)[0]
