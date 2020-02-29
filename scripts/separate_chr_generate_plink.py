@@ -50,7 +50,7 @@ with gzip.open(inputFile, "rt") as vcf:
                         lineList[0] = updateChromosome
                         line = " ".join(lineList)
                         chromosome.write(line)
-                        chromosomeSet.add(chromosomeNumber)
+                        chromosomeSet.add("chr" + chromosomeNumber)
                         plinkFileSet.add("{}chr{}.vcf".format(outputName, chromosomeNumber))
                 else:
                     break
