@@ -40,7 +40,7 @@ with gzip.open(inputFile, "rt") as vcf:
         elif not line.startswith("#") and line.split("\t")[0] not in chromosomeSet:
             chromosomeNumber = line.split("\t")[0]
             if (chromosomeNumber[3:].isnumeric() and int(chromosomeNumber[3:]) in range(0,23)) or (chromosomeNumber[3:].isalpha() and str(chromosomeNumber[3:]) in ["X", "Y"]):
-                with gzip.open("{}{}.vcf".format(outputName, chromosomeNumber), "wb") as chromosome:
+                with gzip.open("{}{}.vcf.gz".format(outputName, chromosomeNumber), "wb") as chromosome:
                     chromosome.write(header.encode())
                     chromosome.write(line.encode())
                     chromosomeSet.add(chromosomeNumber)
