@@ -40,20 +40,19 @@ with gzip.open(inputFile, "rt") as vcf:
         elif not line.startswith("#") and line.split("\t")[0] not in chromosomeSet:
             chromosomeNumber = line.split("\t")[0]
             if (chromosomeNumber[3:].isnumeric() and int(chromosomeNumber[3:]) in range(0,23)) or (chromosomeNumber[3:].isalpha() and str(chromosomeNumber[3:]) in ["X", "Y"]):
-                with open("{}{}.vcf".format(outputName, chromosomeNumber), "w") as chromosome:
+                with gzip.open("{}{}.vcf".format(outputName, chromosomeNumber), "wb") as chromosome:
                     chromosome.write(header)
                     chromosome.write(line)
                     chromosomeSet.add(chromosomeNumber)
-                    plinkFileSet.add("{}{}.vcf".format(outputName, chromosomeNumber))
+                    plinkFileSet.add("{}{}.vcf.gz".format(outputName, chromosomeNumber))
             else:
                 break
         else:
-            with open("{}{}.vcf".format(outputName, chromosomeNumber), "a") as chromosome:
+            with gzip.open("{}{}.vcf.gz".format(outputName, chromosomeNumber), "ab") as chromosome:
                 chromosome.write(line)
 
 #Create bed, bim files for each chromosome of each trio
 plinkFileList = list(plinkFileSet)
-print(plinkFileList)
 plinkFileList.sort()
 for file in plinkFileList:
     outputName = re.findall(r"([\w/_\-]+chr[0-9XY][0-9XY]?)", file)[0]
