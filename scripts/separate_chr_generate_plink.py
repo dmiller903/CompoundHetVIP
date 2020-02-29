@@ -41,15 +41,15 @@ with gzip.open(inputFile, "rt") as vcf:
             chromosomeNumber = line.split("\t")[0]
             if (chromosomeNumber[3:].isnumeric() and int(chromosomeNumber[3:]) in range(0,23)) or (chromosomeNumber[3:].isalpha() and str(chromosomeNumber[3:]) in ["X", "Y"]):
                 with gzip.open("{}{}.vcf".format(outputName, chromosomeNumber), "wb") as chromosome:
-                    chromosome.write(header)
-                    chromosome.write(line)
+                    chromosome.write(header.encode())
+                    chromosome.write(line.encoode())
                     chromosomeSet.add(chromosomeNumber)
                     plinkFileSet.add("{}{}.vcf.gz".format(outputName, chromosomeNumber))
             else:
                 break
         else:
             with gzip.open("{}{}.vcf.gz".format(outputName, chromosomeNumber), "ab") as chromosome:
-                chromosome.write(line)
+                chromosome.write(line.encode())
 
 #Create bed, bim files for each chromosome of each trio
 plinkFileList = list(plinkFileSet)
