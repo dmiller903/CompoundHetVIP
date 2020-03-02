@@ -69,17 +69,17 @@ if os.path.exists(mendelErrorFile):
 rawCount = 0
 flipCount = 0
 total = 0
-with gzip.open(inputFile, 'rt') as sample, open(tempFile, 'wt') as output:
+with gzip.open(inputFile, 'rt') as sample, gzip.open(tempFile, 'wb') as output:
     for line in sample:
         if "##" in line:
-            output.write(line)
+            output.write(line.encode())
         elif line.startswith("#CHROM"):
             header = line.split("\t")
             chromIndex = header.index("#CHROM")
             posIndex = header.index("POS")
             refIndex = header.index("REF")
             altIndex = header.index("ALT")
-            output.write(line)
+            output.write(line.encode())
         else:
             lineList = line.split("\t")
             chrom = lineList[chromIndex]
@@ -89,7 +89,7 @@ with gzip.open(inputFile, 'rt') as sample, open(tempFile, 'wt') as output:
             rawStr = "{} {} {}".format(pos, ref, alt)
             flipStr = "{} {} {}".format(pos, alt, ref)
             if rawStr in posDict[chrom] and pos not in mendelErrorSet:
-                output.write(line)
+                output.write(line.encode())
                 rawCount += 1
                 total += 1
             elif flipStr in posDict[chrom] and pos not in mendelErrorSet:
@@ -98,7 +98,7 @@ with gzip.open(inputFile, 'rt') as sample, open(tempFile, 'wt') as output:
                 line = "\t".join(lineList)
                 line = line.replace("0|1", "b|a").replace("1|0", "a|b").replace("1|1", "a|a").replace("0|0", "b|b")
                 line = line.replace("b|a", "1|0").replace("a|b", "0|1").replace("a|a", "0|0").replace("b|b", "1|1")
-                output.write(line)
+                output.write(line.encode())
                 flipCount += 1
                 total += 1
             else:
@@ -108,11 +108,10 @@ with gzip.open(inputFile, 'rt') as sample, open(tempFile, 'wt') as output:
 rawPercent = (rawCount / total) * 100
 flipPercent = (flipCount / total) * 100
 totalPercent = ((flipCount + rawCount) / total) * 100
-if (flipCount + rawCount) == total:
+if flipCount == 0 and mendelErrorCount == 0:
     print("For {}, chr{}, {} ({:.2f}%) of the sites were unchanged. No outputFile was generated.".format(inputFile, chromosome, rawCount, rawPercent))
 else:
-    os.system("/root/miniconda2/bin/bgzip {}".format(tempFile))
-    os.system(f"mv {tempFile}.gz {outputFile}.gz")
+    os.system(f"mv {tempFile} {outputFile}.gz")
     print("For {}, chr{}, {} ({:.2f}%) of the sites were unchanged".format(inputFile, chromosome, rawCount, rawPercent))
     print("For {}, chr{}, {} ({:.2f}%) of the sites were switched to match the reference panel".format(inputFile, chromosome, flipCount, flipPercent))
     print("For {}, chr{}, {:.2f}% of the sites are now congruent with the reference panel\n".format(inputFile, chromosome, totalPercent))
