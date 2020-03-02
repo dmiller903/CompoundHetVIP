@@ -13,17 +13,16 @@ char = '\n' + ('*' * 70) + '\n'
 parser = argparse.ArgumentParser(description="The parameters for phasing are set so that SHAPEIT2 uses family \
 relationship genotype information and also uses a haplotype reference panel")
 
-parser.add_argument('input_vcf', help='Input file (without suffix)')
+parser.add_argument('input_plink', help='Input file (without suffix)')
 parser.add_argument('output_file', help='Name of output file (without suffix)')
 parser.add_argument('chromosome_number', help='Shapeit phases chromosome by chromsome, so it needs to be known which \
 chromosome to phase')
-parser.add_argument('--is_trio', help='If the VCF files are trios, and you would like to take family relationships \
-into consideration, use family phasing by indicating "y".', default='n')
+parser.add_argument('--is_trio', help='If the VCF files are not trios, indicate with "n".', default='y')
 
 args = parser.parse_args()
 
 #Create variables of each argument from argparse
-inputFile = args.input_vcf
+inputFile = args.input_plink
 outputFile = args.output_file
 chromosome = 'chr' + args.chromosome_number
 trio = args.is_trio
