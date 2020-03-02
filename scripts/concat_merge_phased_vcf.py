@@ -36,7 +36,6 @@ nestedDict = {}
 for file in glob.glob(f"{filePath}/*.gz"):
     firstSample = ""
     chromosome = ""
-
     with gzip.open(file, 'rt') as phasedFile:
         for line in phasedFile:
             if "##" in line:
@@ -70,11 +69,13 @@ for key, value in nestedDict.items():
     for key2, value2 in sorted(value.items()):
         filesToConcat[key].append(value2)
 
-print(filesToConcat)
+
 # concatenate chromosome files into single files ordered by chromosome number
 concatFiles = []
 for key, value in filesToConcat.items():
     for file in value:
+        os.system("gzip -d {}".format(file))
+        os.system("bgzip -f {}".format(file.rstrip(".gz")))
         os.system("tabix -fp vcf {}".format(file))
     tempOutput = "/tmp/{}_phased_combined.vcf".format(key)
     files = " ".join(value)
