@@ -19,6 +19,10 @@ args = parser.parse_args()
 inputFile = args.input_vcf
 outputFile = args.output_file
 
+# Download annotation files
+if len(os.listdir('/snpEff/./data/GRCh37.75')) == 0:
+    os.system("java -jar /snpEff/snpEff.jar download -v GRCh37.75")
+
 # Annotate the vt trimmed file
 os.system(f"java -Xmx40g -jar /snpEff/snpEff.jar GRCh37.75 -v \
 {inputFile} > \
