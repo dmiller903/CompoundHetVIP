@@ -63,11 +63,6 @@ if isGvcf == "y":
     os.system(f"zcat {outputName} | /root/miniconda2/bin/bgzip > {outputName}.gz")
     os.system(f"rm {outputName}")
 
-    #Print message and how long the previous steps took
-    timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
-    timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-    print(f'Non-variant sites have been removed from sample file. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours)')
-
 elif isGvcf == "n":
     with gzip.open(sampleFile, 'rt') as gVCF:
         for line in gVCF:
@@ -112,4 +107,4 @@ if parent1File != None and parent2File != None:
 #Print message and how long the previous steps took
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print(f'Sites not corresponding to sample file have been removed for each parent. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours)')
+print(f'{char}Done. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours) {char}')
