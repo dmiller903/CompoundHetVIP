@@ -23,6 +23,10 @@ databaseName = args.output_database
 famFile = args.fam_file
 cores = args.num_cores
 
+# Download annotation files and CADD files into the container
+if len(os.listdir('/usr/local/share/gemini/gemini_data')) == 0:
+    os.system("gemini update --dataonly --extra cadd_score")
+
 # Load annotated file into a GEMINI database
 os.system(f"gemini load -v {inputFile} \
 -p {famFile} -t snpEff --cores {cores} {databaseName}")
