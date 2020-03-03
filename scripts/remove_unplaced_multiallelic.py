@@ -1,26 +1,27 @@
+# import necessary modules
 import os
 import time
 import argparse
 import re
 import gzip
 
-#Keep track of when the script began
+# Keep track of when the script began
 startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description="Positions that are multiallelic or are duplicates are removed because programs such as PLINK and \
-SHAPEIT2 can not handle these types of sites. Also, sites that contain any missing genotype information \
-(i.e. './.') can be optionally removed to improve phasing accuracy")
+parser = argparse.ArgumentParser(description="Positions that are multiallelic or are duplicates are removed because \
+programs such as PLINK and SHAPEIT2 can not handle these types of sites. Also, sites that contain any missing genotype \
+information (i.e. './.') are removed to improve phasing accuracy, but this option can be set to 'n'.")
 
 parser.add_argument('input_vcf', help='Input VCF file')
-parser.add_argument('output_vcf', help='Path and name of output VCF file')
+parser.add_argument('output_vcf', help='Output VCF file')
 parser.add_argument('--remove_unknown_genotypes', help="Remove postions with unknown genotypes. This is useful if \
-you are working with trios and you are phasing based on family relationships.", default="n")
+you are working with trios and you are phasing based on family relationships.", default="y")
 
 args = parser.parse_args()
 
-#Create variables of each argument from argparse
+# Create variables of each argument from argparse
 inputFile = args.input_vcf
 outputFile = args.output_vcf
 removeUnknownGenotypes = args.remove_unknown_genotypes
@@ -28,7 +29,7 @@ tempFile = "/tmp/temp.vcf"
 fileWithoutSuffix = re.findall(r'([\w\-_/]+)\.', outputFile)[0]
 duplicateFile = f"{fileWithoutSuffix}_removed_duplicates.vcf"
 
-#Remove multiallelic sites
+# Remove multiallelic sites and positions with unknown genotypes
 if removeUnknownGenotypes == "y":
     with gzip.open(inputFile, "rt") as inFile, open(tempFile, "wt") as outFile:
         for line in inFile:
@@ -39,14 +40,10 @@ if removeUnknownGenotypes == "y":
                 # Only keep positions that are not multiallelic and lines with unknown genotypes
                 if "," not in splitLine[4] and "./." not in line:
                     outFile.write(line)
-    os.system("bgzip -f {}".format(tempFile))
+    os.system(f"bgzip -f {tempFile}")
     tempFile = "/tmp/temp.vcf.gz"
 
-    #Output message and time complete
-    timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
-    timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-    print('{}multiallelic sites, and sites where there are unknown genotypes have been removed. Time elapsed: \
-    {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
+# Remove multiallelic sites
 else:
     with gzip.open(inputFile, "rt") as inFile, open(tempFile, "wt") as outFile:
         for line in inFile:
@@ -58,16 +55,10 @@ else:
                 if "," not in splitLine[4]:
                     outFile.write(line)
 
-    os.system("bgzip -f {}".format(tempFile))
+    os.system(f"bgzip -f {tempFile}")
     tempFile = "/tmp/temp.vcf.gz"
 
-    #Output message and time complete
-    timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
-    timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-    print('{}multiallelic sites have been removed. Time elapsed: \
-    {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
-
-#Remove all duplicate sites
+# Remove all duplicate sites
 posDict = dict()
 dupDict = dict()
 with gzip.open(tempFile, "rt") as inputFile:
@@ -99,9 +90,9 @@ with gzip.open(tempFile, "rt") as inputFile, open(outputFile, "wt") as outFile, 
             outFile.write(line)
             duplicates.write(line)
 
-os.system("bgzip -f {}".format(outputFile))
+os.system(f"bgzip -f {outputFile}")
 
-
+# Output time it took to complete
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print('{}Duplicate sites removed. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
+print(f'{char}Done. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours){char}')
