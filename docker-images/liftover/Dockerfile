@@ -2,7 +2,7 @@ FROM debian:buster
   
 LABEL \
   author="Dustin Miller" \
-  description="miniconda2, Picard, GATK4" \
+  description="miniconda2, Picard, GATK4, samtools" \
   maintainer="dustin_miller@byu.edu"
 
 RUN \
@@ -21,19 +21,10 @@ apt-get update \
   && conda config --append channels anaconda \
   # Install samtools
   && conda install -c bioconda samtools=1.9 \
-  # Download Reference Files and Plink
-  && wget --no-check-certificate https://files.osf.io/v1/resources/3znuj/providers/osfstorage/5d9ddd0ba7bc73000ce87e38/?zip= -O /references.zip \
-  && unzip /references.zip -d /references \
-  && rm /references.zip \
-  && /root/miniconda2/bin/bgzip -d /references/human_g1k_v37_modified.fasta.gz \
-  && /root/miniconda2/bin/bgzip -d /references/hg38ToHg19.over.chain.gz \
-  && /root/miniconda2/bin/bgzip -d /references/Homo_sapiens_assembly38.fasta.gz \
-  && /root/miniconda2/bin/bgzip -d /references/Homo_sapiens_assembly38.dict.gz \
-  && /root/miniconda2/bin/bgzip -d /references/Homo_sapiens_assembly38.fasta.fai.gz \
-
   # Install Picard
   && conda install -c bioconda picard=2.21.1 \
   # Install GATK4
   && conda install -c bioconda gatk4=4.0.5.1
+
 ENV \
   PATH=${PATH}:/root/miniconda2/bin/
