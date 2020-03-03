@@ -25,15 +25,13 @@ apt-get update \
   && conda install -c bioconda grabix=0.1.8 \
   && conda install -c bioconda tabix=0.2.6 \
   && conda install -c bioconda java-jdk=8.0.112 \
-  # Install snpEff and Reference Files
+  # Install snpEff
   && wget --no-check-certificate https://sourceforge.net/projects/snpeff/files/snpEff_v4_3t_core.zip \
   && unzip /snpEff_v4_3t_core.zip \
-  && java -jar /snpEff/snpEff.jar download -v GRCh37.75 \
-  # Install gemini with cadd scores
+  && mkdir -p /snpEff/./data/GRCh37.75 \
+  # Install gemini without annotation files or cadd scores
   && wget --no-check-certificate https://raw.github.com/arq5x/gemini/master/gemini/scripts/gemini_install.py \
-  && python gemini_install.py /usr/local /usr/local/share/gemini \
-  && export PATH=$PATH:/usr/local/gemini/bin \
-  && gemini update --dataonly --extra cadd_score
+  && python gemini_install.py --nodata /usr/local /usr/local/share/gemini
 
 ENV \
-  PATH=${PATH}:/root/miniconda2/bin:/root/miniconda2/share/snpeff-4.3.1t-2
+  PATH=${PATH}:/usr/local/bin/:/usr/local/share/gemini/anaconda/bin:/root/miniconda2/bin:/root/miniconda2/share/snpeff-4.3.1t-2:/root/miniconda2/bin:/usr/local/bin/gemini
