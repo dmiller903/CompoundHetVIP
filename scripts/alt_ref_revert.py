@@ -1,3 +1,4 @@
+# Import necessary modules
 import os
 import time
 import argparse
@@ -28,6 +29,7 @@ outputFile = args.output_file
 chromosome = args.chromosome_number
 tempFile = "/tmp/" + re.findall(r'/?([\w\-_\.]+)', outputFile)[-1]
 
+# Create dictionary from legend file where key is chromosome and value is a set of strings that give site information
 posDict = dict()
 for file in glob.glob("/references/1000GP_Phase3/*legend.gz"):
     if file == f"/references/1000GP_Phase3/1000GP_Phase3_chr{chromosome}.legend.gz":
@@ -43,17 +45,15 @@ for file in glob.glob("/references/1000GP_Phase3/*legend.gz"):
                 pos = lineList[posIndex]
                 ref = lineList[refIndex]
                 alt = lineList[altIndex]
-                siteStr = "{} {} {}".format(pos, ref, alt)
+                siteStr = f"{pos} {ref} {alt}"
                 if chromosome not in posDict:
                     posDict[chromosome] = {siteStr}
                 else:
                     posDict[chromosome].add(siteStr)
 
-print("Dictionary Created\n")
-
 mendelErrorCount = 0
 fileWithoutSuffix = re.findall(r'([\w\-_/]+)\.', inputFile)[0]
-mendelErrorFile = "{}.snp.me".format(fileWithoutSuffix)
+mendelErrorFile = f"{fileWithoutSuffix}.snp.me"
 mendelErrorSet = set()
 # Create a set of any positions with mendel errors as given by the shapeit2 .snp.me files
 if os.path.exists(mendelErrorFile):
@@ -86,8 +86,8 @@ with gzip.open(inputFile, 'rt') as sample, gzip.open(tempFile, 'wb') as output:
             pos = lineList[posIndex]
             ref = lineList[refIndex]
             alt = lineList[altIndex]
-            rawStr = "{} {} {}".format(pos, ref, alt)
-            flipStr = "{} {} {}".format(pos, alt, ref)
+            rawStr = f"{pos} {ref} {alt}"
+            flipStr = f"{pos} {alt} {ref}"
             if rawStr in posDict[chrom] and pos not in mendelErrorSet:
                 output.write(line.encode())
                 rawCount += 1
@@ -105,14 +105,20 @@ with gzip.open(inputFile, 'rt') as sample, gzip.open(tempFile, 'wb') as output:
                 total += 1
                 mendelErrorCount += 1
 
+# Output statistics
 rawPercent = (rawCount / total) * 100
 flipPercent = (flipCount / total) * 100
 totalPercent = ((flipCount + rawCount) / total) * 100
 if flipCount == 0 and mendelErrorCount == 0:
-    print("For {}, chr{}, {} ({:.2f}%) of the sites were unchanged. No outputFile was generated.".format(inputFile, chromosome, rawCount, rawPercent))
+    print(f"For {inputFile}, chr{chromosome}, {rawCount} ({rawPercent:.2f}%) of the sites were unchanged. No outputFile was generated.")
 else:
     os.system(f"mv {tempFile} {outputFile}.gz")
-    print("For {}, chr{}, {} ({:.2f}%) of the sites were unchanged".format(inputFile, chromosome, rawCount, rawPercent))
-    print("For {}, chr{}, {} ({:.2f}%) of the sites were switched to match the reference panel".format(inputFile, chromosome, flipCount, flipPercent))
-    print("For {}, chr{}, {:.2f}% of the sites are now congruent with the reference panel\n".format(inputFile, chromosome, totalPercent))
-    print("For {}, chr{}, {} sites were removed due to mendel errors\n".format(inputFile, chromosome, mendelErrorCount))
+    print(f"For {inputFile}, chr{chromosome}, {rawCount} ({rawPercent:.2f}%) of the sites were unchanged")
+    print(f"For {inputFile}, chr{chromosome}, {flipCount} ({flipPercent:.2f}%) of the sites were switched to match the reference panel")
+    print(f"For {inputFile}, chr{chromosome}, {totalPercent:.2f}% of the sites are now congruent with the reference panel\n")
+    print(f"For {inputFile}, chr{chromosome}, {mendelErrorCount} sites were removed due to mendel errors\n")
+
+# Output message and time complete
+timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
+timeElapsedHours = round(timeElapsedMinutes / 60, 2)
+print(f'{char}Done. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours){char}')

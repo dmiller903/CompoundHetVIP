@@ -1,9 +1,11 @@
+# import necessary modules
 import os
 import time
 import argparse
 import re
 import gzip
 import glob
+
 #Keep track of when the script began
 startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
@@ -14,11 +16,13 @@ concatenates all phased chromosomes into a single file, then merges different co
 
 
 parser.add_argument('phased_files_path', help='A path where all the phased files are stored. Only phased files from \
-a single phasing method should be in this folder.')
+a single phasing method should be in this folder. Also, if you have .fam files and you are merging different families into \
+one file, provide .fam files in this folder as well.')
 parser.add_argument('output_file', help='Name of output file')
-parser.add_argument('--output_fam_file', help='Name of output fam file if fam files are included in the "phased_files_path"')
-parser.add_argument('--merge_files', help='If multiple files need to be merged after chromosomes are combined, please indicate by "y"', \
-default="n")
+parser.add_argument('--output_fam_file', help='Name of the output .fam file. If you are merging files from different \
+families, provide a .fam file in the phased_files_path for each of the different files that are to be merged.')
+parser.add_argument('--merge_files', help='If multiple sample files need to be merged after chromosomes are combined, \
+please indicate by "y"', default="n")
 
 args = parser.parse_args()
 
@@ -74,20 +78,20 @@ for key, value in nestedDict.items():
 concatFiles = []
 for key, value in filesToConcat.items():
     for file in value:
-        os.system("gzip -d {}".format(file))
-        os.system("bgzip -f {}".format(file.rstrip(".gz")))
-        os.system("tabix -fp vcf {}".format(file))
-    tempOutput = "/tmp/{}_phased_combined.vcf".format(key)
+        os.system(f"gzip -d {file}")
+        os.system(f"bgzip -f {file.rstrip(".gz")}")
+        os.system(f"tabix -fp vcf {file}")
+    tempOutput = f"/tmp/{key}_phased_combined.vcf"
     files = " ".join(value)
-    os.system("bcftools concat {} -o {}".format(files, tempOutput))
-    os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(tempOutput, tempOutput))
+    os.system(f"bcftools concat {files} -o {tempOutput}")
+    os.system(f"bgzip -f {tempOutput} && tabix -fp vcf {tempOutput}.gz")
     concatFiles.append(f'{tempOutput}.gz')
 
 # Merge all phased, concatenated, files into one
 if mergeFiles == "y":
     concatFilesString = " ".join(concatFiles)
-    os.system("bcftools merge -m both {} -o {}".format(concatFilesString, outputFile))
-    os.system("bgzip -f {} && tabix -fp vcf {}.gz".format(outputFile, outputFile))
+    os.system(f"bcftools merge -m both {concatFilesString} -o {outputFile}")
+    os.system(f"bgzip -f {outputFile} && tabix -fp vcf {outputFile}.gz")
 elif mergeFiles == "n":
     os.system(f"mv {tempOutput}.gz {outputFile}.gz")
 
@@ -113,6 +117,12 @@ with gzip.open(f"{outputFile}.gz", "rt") as vcfFile:
             break
 
 # use the sample order in the list to output each sample in order as found in the vcf file
-with open(famOutput, "w") as output:
-    for sample in sampleList:
-        output.write(sampleDict[sample])
+if famOutput != None:
+    with open(famOutput, "w") as output:
+        for sample in sampleList:
+            output.write(sampleDict[sample])
+
+#Print message and how long the previous steps took
+timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
+timeElapsedHours = round(timeElapsedMinutes / 60, 2)
+print(f'{char}Done. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours){char}')
