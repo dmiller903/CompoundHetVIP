@@ -23,15 +23,19 @@ databaseName = args.output_database
 famFile = args.fam_file
 cores = args.num_cores
 
-# Download annotation files and CADD files into the container
-if len(os.listdir('/usr/local/share/gemini/gemini_data')) == 0:
+# Download annotation files and CADD files if they haven't been downloaded already
+if not os.path.exists("/usr/local/share/gemini/gemini_data/hg19.vista.enhancers.20131108.bed.gz.tbi"):
     os.system("gemini update --dataonly --extra cadd_score")
 
 # Load annotated file into a GEMINI database
-os.system(f"gemini load -v {inputFile} \
--p {famFile} -t snpEff --cores {cores} {databaseName}")
+if famFile != None:
+    os.system(f"gemini load -v {inputFile} \
+    -p {famFile} -t snpEff --cores {cores} {databaseName}")
+elif famFile == None:
+    os.system(f"gemini load -v {inputFile} \
+    -t snpEff --cores {cores} {databaseName}")
 
-#Output time information
+# Print output information
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print('{}Annotation complete. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
+print(f'{char}Done. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours){char}')

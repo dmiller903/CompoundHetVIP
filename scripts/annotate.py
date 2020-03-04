@@ -20,7 +20,7 @@ inputFile = args.input_vcf
 outputFile = args.output_file
 
 # Download annotation files
-if len(os.listdir('/snpEff/./data/GRCh37.75')) == 0:
+if not os.path.exists("/snpEff/./data/GRCh37.75/sequence.HSCHR6_MHC_SSTO.bin"):
     os.system("java -jar /snpEff/snpEff.jar download -v GRCh37.75")
 
 # Annotate the vt trimmed file
@@ -28,7 +28,7 @@ os.system(f"java -Xmx40g -jar /snpEff/snpEff.jar GRCh37.75 -v \
 {inputFile} > \
 {outputFile}")
 
-#Output time information
+# Print output information
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print('{}Annotation complete. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
+print(f'{char}Done. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours){char}')
