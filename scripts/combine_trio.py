@@ -39,6 +39,7 @@ if not os.path.exists("/references/Homo_sapiens_assembly38.fasta") and isGvcf ==
         fileName = file.split("/")[-1]
         if not os.path.exists(f"/references/{fileName}"):
             os.system(f"mv {file} /references/")
+    os.system("chmod 777 /references/*")
 
 # Use GATK to combine all trios into one vcf and then genotype the combined trio vcf
 files = [probandFile, parent1File, parent2File]
