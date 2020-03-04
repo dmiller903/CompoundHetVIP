@@ -2,7 +2,7 @@ FROM debian:buster
   
 LABEL \
   author="Dustin Miller" \
-  description="shapeit, HapCUT2, Beagle, and Eagle" \
+  description="Install SHAPEIT2, Beagle, and Eagle2" \
   maintainer="dustin_miller@byu.edu"
 
 RUN \
@@ -36,20 +36,9 @@ apt-get update \
   && conda install -c anaconda git=2.20.1 \
   # Install samtools
   && conda install -c bioconda samtools=1.9 \
-  # Download Reference Files
-  && wget --no-check-certificate https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.tgz -P /references \
-  && tar zxf /references/1000GP_Phase3.tgz -C /references/ \
-  && wget --no-check-certificate https://raw.githubusercontent.com/dmiller903/ch-pipeline/master/docker-images/phase-docker/reference_update.py \
-  && python3 reference_update.py \
   # Install shapeit
   && wget --no-check-certificate https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r904.glibcv2.17.linux.tar.gz \
   && tar -zxvf shapeit.v2.r904.glibcv2.17.linux.tar.gz \
-  # Install HapCUT2
-  && git clone https://github.com/dmiller903/HapCUT2.git \
-  && cd /HapCUT2 \
-  && make \
-  && make install \
-  && cd / \
   # Download Beagle Java file
   && wget --no-check-certificate http://faculty.washington.edu/browning/beagle/beagle.25Nov19.28d.jar \
   # Download and Extract Eagle executable

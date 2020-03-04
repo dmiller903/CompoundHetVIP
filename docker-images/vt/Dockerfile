@@ -22,11 +22,7 @@ apt-get update \
   # Install samtools
   && conda install -c bioconda samtools=1.9 \
   # Install vt
-  && conda install -c bioconda vt=2015.11.10 \
-  # Download Reference Files and Plink
-  && wget --no-check-certificate https://files.osf.io/v1/resources/3znuj/providers/osfstorage/5dc57b1f7f37e3000ecaed96/?zip= -O /references.zip \
-  && unzip /references.zip -d /references \
-  && rm /references.zip \
-  && /root/miniconda2/bin/bgzip -d /references/human_g1k_v37.fasta.gz \
+  && conda install -c bioconda vt=2015.11.10
+
 ENV \
   PATH=${PATH}:/root/miniconda2/bin/
