@@ -79,7 +79,7 @@ concatFiles = []
 for key, value in filesToConcat.items():
     for file in value:
         os.system(f"gzip -d {file}")
-        os.system(f"bgzip -f {file.rstrip(".gz")}")
+        os.system(f"bgzip -f {file.rstrip('.gz')}")
         os.system(f"tabix -fp vcf {file}")
     tempOutput = f"/tmp/{key}_phased_combined.vcf"
     files = " ".join(value)
