@@ -11,52 +11,37 @@ char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
 parser = argparse.ArgumentParser(description="Positions that are multiallelic or are duplicates are removed because \
-programs such as PLINK and SHAPEIT2 can not handle these types of sites. Also, sites that contain any missing genotype \
-information (i.e. './.') are removed to improve phasing accuracy, but this option can be set to 'n'.")
+programs such as PLINK and SHAPEIT2 can not handle these types of sites. Also, positions that contain missing genotype \
+information (i.e. './.') in more then one sample are removed to improve phasing accuracy.")
 
 parser.add_argument('input_vcf', help='Input VCF file')
 parser.add_argument('output_vcf', help='Output VCF file')
-parser.add_argument('--remove_unknown_genotypes', help="Remove postions with unknown genotypes. This is useful if \
-you are working with trios and you are phasing based on family relationships.", default="y")
 
 args = parser.parse_args()
 
 # Create variables of each argument from argparse
 inputFile = args.input_vcf
 outputFile = args.output_vcf
-removeUnknownGenotypes = args.remove_unknown_genotypes
 tempFile = "/tmp/temp.vcf"
 fileWithoutSuffix = re.findall(r'([\w\-_/]+)\.', outputFile)[0]
 duplicateFile = f"{fileWithoutSuffix}_removed_duplicates.vcf"
 
-# Remove multiallelic sites and positions with unknown genotypes
-if removeUnknownGenotypes == "y":
-    with gzip.open(inputFile, "rt") as inFile, open(tempFile, "wt") as outFile:
-        for line in inFile:
-            if line.startswith("#"):
-                outFile.write(line) 
-            else:
-                splitLine = line.split("\t")
-                # Only keep positions that are not multiallelic and lines with unknown genotypes
-                if "," not in splitLine[4] and "./." not in line:
-                    outFile.write(line)
-    os.system(f"bgzip -f {tempFile}")
-    tempFile = "/tmp/temp.vcf.gz"
+# Set of chromosomes to keep
+chrToKeep = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13",\
+ "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"}
 
-# Remove multiallelic sites
-else:
-    with gzip.open(inputFile, "rt") as inFile, open(tempFile, "wt") as outFile:
-        for line in inFile:
-            if line.startswith("#"):
-                outFile.write(line) 
-            else:
-                splitLine = line.split("\t")
-                # Only keep positions that are not multiallelic
-                if "," not in splitLine[4]:
-                    outFile.write(line)
-
-    os.system(f"bgzip -f {tempFile}")
-    tempFile = "/tmp/temp.vcf.gz"
+# Remove multiallelic sites and keep positions where genotype information is available for patient and at least one parent
+with gzip.open(inputFile, "rt") as inFile, open(tempFile, "wt") as outFile:
+    for line in inFile:
+        if line.startswith("#"):
+            outFile.write(line) 
+        else:
+            splitLine = line.split("\t")
+            if splitLine[0] in chrToKeep and "," not in splitLine[4] and line.count("./.") < 2:
+                outFile.write(line)
+                
+os.system(f"bgzip -f {tempFile}")
+tempFile = "/tmp/temp.vcf.gz"
 
 # Remove all duplicate sites
 posDict = dict()
