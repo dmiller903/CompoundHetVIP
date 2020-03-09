@@ -1,7 +1,6 @@
 import os
 import time
 import argparse
-import concurrent.futures
 
 #Keep track of when the script began
 startTime = time.time()
@@ -106,4 +105,4 @@ os.system(f'gemini de_novo --columns "chrom, start, vcf_id, ref, alt, gene, impa
 #Output time information
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
-print('{}Annotation complete. Time elapsed: {} minutes ({} hours){}'.format(char, timeElapsedMinutes, timeElapsedHours, char))
+print(f'{char}Done. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours){char}')

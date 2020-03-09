@@ -4,7 +4,7 @@ import time
 import argparse
 import glob
 
-#Keep track of when the script began
+# Keep track of when the script began
 startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
@@ -62,7 +62,7 @@ elif isGvcf == "n":
     fileString = " ".join(files)
     os.system(f"bcftools merge {fileString} -o {outputName} && tabix -fp vcf {outputName}")
 
-#Print message and how long the previous steps took
+# Print message and how long the previous steps took
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
 print(f'{char}Done. Time elapsed: {timeElapsedMinutes} minutes ({timeElapsedHours} hours){char}')

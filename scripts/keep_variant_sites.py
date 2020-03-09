@@ -6,7 +6,7 @@ import time
 import concurrent.futures
 import argparse
 
-#Keep track of when the script began
+# Keep track of when the script began
 startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
