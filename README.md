@@ -8,4 +8,4 @@ Phasing requires specific file types which may vary depending on phasing softwar
 ### Our Methodology
 We have designed our Compound Heterozygous Variant Identification Pipeline (CompoundHetVIP) to overcome many of the time-consuming challenges that researchers may face when trying to phase patient data. By providing reproducible scripts and a Docker Image where these scripts are executed, other researchers will be able to examine our methodology in detail and apply it to their data. Encapsulating our code within containers helps control what software versions are used, what system libraries are used, and creates a cohesive computational environment.
 
-CompoundHetVIP is designed to be used with gVCF or VCF files. Please see [ch_pipeline_example.pdf](https://github.com/dmiller903/ch-pipeline/blob/master/ch_pipeline_example.pdf) for example code and a description of each step of the pipeline.
+CompoundHetVIP is designed to be used with gVCF or VCF files. Please see [ch_pipeline_example.pdf](https://github.com/dmiller903/CompoundHetVIP/blob/master/ch_pipeline_example.pdf) for example code and a description of each step of the pipeline.
