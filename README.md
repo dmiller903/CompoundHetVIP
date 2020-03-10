@@ -1,4 +1,4 @@
-## Compound Heterozygous Variant Identification Pipeline (CompHetVIP)
+## Compound Heterozygous Variant Identification Pipeline (CompoundHetVIP)
 
 ### Background
 A compound heterozygous variant occurs when a person inherits a variant from one parent within a specific gene and also inherits another variant from the other parent at a different position within the same gene. The effect of compound heterozygotic inheritance results in two recessive alleles that may cause disease. To detect these types of variants it is necessary to differentiate between paternally and maternally derived nucleotides. If sequencing has already taken place, computational algorithms can be used to help determine which nucleotides were inherited from each parent through a process termed “phasing”. 
