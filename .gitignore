@@ -12,3 +12,4 @@
 *.sh
 ensembl_genes.txt
 ncbi_genes.txt
+*Store
