@@ -59,7 +59,7 @@ apt-get update \
   && conda install -c bioconda grabix=0.1.8 \
   # Install tabix (needed for GEMINI)
   && conda install -c bioconda tabix=0.2.6 \
-  # Install snpEff
+  # Install snpEff and create directory where snpEff files will eventually be stored
   && wget --no-check-certificate https://sourceforge.net/projects/snpeff/files/snpEff_v4_3t_core.zip \
   && unzip /snpEff_v4_3t_core.zip \
   && mkdir -p /snpEff/./data/GRCh37.75 \
