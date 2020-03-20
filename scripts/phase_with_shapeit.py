@@ -71,6 +71,24 @@ if trio == "y":
         /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.legend.gz \
         /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc \
         --force --seed 123456789")
+    # Rephase without MCMC if "Underflow" is detected in shapeit log file
+    logFile = f"{outputFile}_phased_mcmc.log"
+    with open(logFile) as logFile:
+        logFile = logFile.read()
+        if "ERROR: Underflow" in logFile:
+            tempList.append(outputFile)
+            # If alignment issues are found, remove problematic positions while phasing using the exclude file from check step
+            if os.path.exists(f"{file}_check.snp.strand.exclude"):
+                os.system(f"/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {outputFile} --output-log {outputFile}_phased_mcmc.log -O {outputFile}_phased_mcmc \
+                -M /references/1000GP_Phase3/genetic_map_{chromosome}_combined_b37.txt \
+                --input-ref /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.legend.gz \
+                /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --exclude-snp {outputFile}_check.snp.strand.exclude --force --seed 123456789")
+            # If no alignment issues are found, do not remove positions while phasing
+            else:
+                os.system(f"/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {outputFile} --output-log {outputFile}_phased_mcmc.log -O {outputFile}_phased_mcmc \
+                -M /references/1000GP_Phase3/genetic_map_{chromosome}_combined_b37.txt \
+                --input-ref /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.legend.gz \
+                /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --force --seed 123456789")
 
 # Phase only using haplotype reference panel
 elif trio == "n":
@@ -100,6 +118,24 @@ elif trio == "n":
         /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.legend.gz \
         /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc \
         --force --seed 123456789")
+    # Rephase without MCMC if "Underflow" is detected in shapeit log outputFile
+    logFile = f"{outputFile}_phased_mcmc.log"
+    with open(logFile) as logFile:
+        logFile = logFile.read()
+        if "ERROR: Underflow" in logFile:
+            tempList.append(outputFile)
+            # If alignment issues are found, remove problematic positions while phasing using the exclude outputFile from check step
+            if os.path.exists(f"{outputFile}_check.snp.strand.exclude"):
+                os.system(f"/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {outputFile} --output-log {outputFile}_phased_mcmc.log -O {outputFile}_phased_mcmc \
+                -M /references/1000GP_Phase3/genetic_map_{chromosome}_combined_b37.txt \
+                --input-ref /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.legend.gz \
+                /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --exclude-snp {outputFile}_check.snp.strand.exclude --force --seed 123456789")
+            # If no alignment issues are found, do not remove positions while phasing
+            else:
+                os.system(f"/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {outputFile} --output-log {outputFile}_phased_mcmc.log -O {outputFile}_phased_mcmc \
+                -M /references/1000GP_Phase3/genetic_map_{chromosome}_combined_b37.txt \
+                --input-ref /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.legend.gz \
+                /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --force --seed 123456789")
 
 # Convert phased files to vcf files and bgzip output vcf
 os.system(f"/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -convert --input-haps {outputFile} \
