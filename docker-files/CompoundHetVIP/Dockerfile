@@ -20,6 +20,7 @@ apt-get update \
   automake=1:1.16.1-4 \
   autoconf=2.69-11 \
   autogen=1:5.18.12-4 \
+  git=1:2.20.1-2+deb10u1 \
   # Install miniconda2 and config channels
   && wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-4.7.10-Linux-x86_64.sh \
   && bash Miniconda2-4.7.10-Linux-x86_64.sh -b -p \
@@ -65,6 +66,11 @@ apt-get update \
   && mkdir -p /snpEff/./data/GRCh37.75 \
   # Install gemini without annotation files or cadd scores
   && wget --no-check-certificate https://raw.githubusercontent.com/dmiller903/gemini/master/gemini/scripts/gemini_install.py \
-  && python gemini_install.py --nodata /usr/local /usr/local/share/gemini
+  && python gemini_install.py --nodata /usr/local /usr/local/share/gemini \
+  # Clone CompoundHetVIP from github and place python scripts at root
+  && git config --global http.sslverify "false" \
+  && git clone https://github.com/dmiller903/CompoundHetVIP.git \
+  && cp CompoundHetVIP/scripts/*.py / \
+  && rm -r CompoundHetVIP
 ENV \
   PATH=${PATH}:/root/miniconda2/bin/:/root/miniconda2/share/snpeff-4.3.1t-2:/root/miniconda2/bin:/usr/local/bin/gemini
