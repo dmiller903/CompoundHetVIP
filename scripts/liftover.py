@@ -15,8 +15,8 @@ parser = argparse.ArgumentParser(description='Some phasing programs and other pr
 to GRCh37 using GATKs "CombineGVCFs" tool')
 
 parser.add_argument('input_vcf', help='Input VCF file')
-parser.add_argument('output_vcf', help='Path and name of output VCF file. Do not include ".gz" at the end of the file \
-name as this will be included during liftover')
+parser.add_argument('output_vcf', help='Path and name of output VCF file. Include ".gz" at the end of the file \
+name')
 
 args = parser.parse_args()
 
@@ -45,7 +45,7 @@ if not os.path.exists("/references/hg38ToHg19.over.chain"):
     os.system("chmod 777 /references/*")
 
 # Liftover file(s)
-os.system(f"java -Xmx12G -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I={inputFile} O={outputFile}.gz \
+os.system(f"java -Xmx12G -jar /root/miniconda2/share/picard-2.21.1-0/picard.jar LiftoverVcf I={inputFile} O={outputFile} \
 CHAIN=/references/hg38ToHg19.over.chain R=/references/human_g1k_v37_modified.fasta REJECT={fileWithoutSuffix}_rejected_variants.vcf")
 
 # Output message and time complete
