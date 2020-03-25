@@ -61,7 +61,7 @@ with gzip.open(tempFile, "rt") as inputFile:
             elif chromosome in posDict and pos in posDict[chromosome]:
                 dupDict[chromosome].add(pos)
 
-with gzip.open(tempFile, "rt") as inputFile, open(outputFile, "wt") as outFile, open(duplicateFile, "w") as duplicates:
+with gzip.open(tempFile, "rt") as inputFile, open(outputFile.rstrip(".gz"), "wt") as outFile, open(duplicateFile, "w") as duplicates:
     for line in inputFile:
         if not line.startswith("#"):
             splitLine = line.split("\t")
@@ -75,7 +75,7 @@ with gzip.open(tempFile, "rt") as inputFile, open(outputFile, "wt") as outFile, 
             outFile.write(line)
             duplicates.write(line)
 
-os.system(f"bgzip -f {outputFile}")
+os.system(f"bgzip -f {outputFile.rstrip('.gz')}")
 
 # Output time it took to complete
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
