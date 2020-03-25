@@ -43,7 +43,7 @@ if not os.path.exists("/references/Homo_sapiens_assembly38.fasta") and isGvcf ==
 
 # Use GATK to combine all trios into one vcf and then genotype the combined trio vcf
 files = [probandFile, parent1File, parent2File]
-tempName = "/tmp/temp.vcf"
+tempName = "/tmp/temp.vcf.gz"
 if isGvcf == "y":
     try:
         fileString = ""
@@ -60,7 +60,7 @@ elif isGvcf == "n":
     for file in files:
         os.system(f"tabix -fp vcf {file}")
     fileString = " ".join(files)
-    os.system(f"bcftools merge {fileString} -o {outputName} && tabix -fp vcf {outputName}")
+    os.system(f"bcftools merge {fileString} -o {outputName.rstrip(".gz")} && bgzip {outputName.rstrip(".gz")} && tabix -fp vcf {outputName}")
 
 # Print message and how long the previous steps took
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
