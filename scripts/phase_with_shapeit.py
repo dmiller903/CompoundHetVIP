@@ -76,9 +76,8 @@ if trio == "y":
     with open(logFile) as logFile:
         logFile = logFile.read()
         if "ERROR: Underflow" in logFile:
-            tempList.append(outputFile)
             # If alignment issues are found, remove problematic positions while phasing using the exclude file from check step
-            if os.path.exists(f"{file}_check.snp.strand.exclude"):
+            if os.path.exists(f"{outputFile}_check.snp.strand.exclude"):
                 os.system(f"/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -B {inputFile} --output-log {outputFile}.log -O {outputFile} \
                 -M /references/1000GP_Phase3/genetic_map_{chromosome}_combined_b37.txt \
                 --input-ref /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.legend.gz \
@@ -123,7 +122,6 @@ elif trio == "n":
     with open(logFile) as logFile:
         logFile = logFile.read()
         if "ERROR: Underflow" in logFile:
-            tempList.append(outputFile)
             # If alignment issues are found, remove problematic positions while phasing using the exclude outputFile from check step
             if os.path.exists(f"{outputFile}_check.snp.strand.exclude"):
                 os.system(f"/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -V {inputFile} --output-log {outputFile}.log -O {outputFile} \
@@ -137,10 +135,16 @@ elif trio == "n":
                 --input-ref /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.hap.gz /references/1000GP_Phase3/1000GP_Phase3_{chromosome}.legend.gz \
                 /references/1000GP_Phase3/1000GP_Phase3.sample --thread 3 --no-mcmc --force --seed 123456789")
 
-# Convert phased files to vcf files and bgzip output vcf
-os.system(f"/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -convert --input-haps {outputFile} \
---output-log {outputFile}_vcf.log --output-vcf {outputFile}.vcf")
-os.system(f"bgzip -f {outputFile}.vcf")
+# Convert phased files to vcf files and bgzip output vcf if underflow not present
+logFile = f"{outputFile}.log"
+with open(logFile) as logFile:
+    logFile = logFile.read()
+    if "ERROR: Underflow" not in logFile:
+        os.system(f"/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -convert --input-haps {outputFile} \
+        --output-log {outputFile}_vcf.log --output-vcf {outputFile}.vcf")
+        os.system(f"bgzip -f {outputFile}.vcf")
+    else:
+        print(f"{inputFile} not phased due to underflow issues")
 
 # Output message and time complete
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
