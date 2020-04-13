@@ -65,7 +65,7 @@ apt-get update \
   && unzip /snpEff_v4_3t_core.zip \
   && mkdir -p /snpEff/./data/GRCh37.75 \
   # Install gemini without annotation files or cadd scores
-  && wget --no-check-certificate https://raw.github.com/arq5x/gemini/master/gemini/scripts/gemini_install.py \
+  && wget --no-check-certificate https://raw.githubusercontent.com/dmiller903/gemini/master/gemini/scripts/gemini_install.py \
   && python gemini_install.py --nodata /usr/local /usr/local/share/gemini \
   # Clone CompoundHetVIP from github and place python scripts at root
   && git config --global http.sslverify "false" \
