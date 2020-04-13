@@ -171,11 +171,11 @@ if anonymizePatients == "y":
                     newLineList.append(item)
             line = "\t".join(newLineList)
             if gene in geneLengths and gene in gdiDict:
-                outputFile.write(f"{patient}\t{gender}\t{line}\t{geneLengths[gene][0]}\t{geneLengths[gene][1]}\t{gdiDict[key][0]}\t{gdiDict[key][1]}\n")
+                outputFile.write(f"{patient}\t{gender}\t{line}\t{geneLengths[gene][0]}\t{geneLengths[gene][1]}\t{gdiDict[gene][0]}\t{gdiDict[gene][1]}\n")
             elif gene in geneLengths and gene not in gdiDict:
                 outputFile.write(f"{patient}\t{gender}\t{line}\t{geneLengths[gene][0]}\t{geneLengths[gene][1]}\tNA\tNA\n")
             elif gene in gdiDict and gene not in geneLengths:
-                outputFile.write(f"{patient}\t{gender}\t{line}\tNA\tNA\t{gdiDict[key][0]}\t{gdiDict[key][1]}\n")
+                outputFile.write(f"{patient}\t{gender}\t{line}\tNA\tNA\t{gdiDict[gene][0]}\t{gdiDict[gene][1]}\n")
             else:
                 outputFile.write(f"{patient}\t{gender}\t{line}\tNA\tNA\tNA\tNA\n")
 elif anonymizePatients == "n":
@@ -190,11 +190,11 @@ elif anonymizePatients == "n":
             lineList = line.rstrip("\n").split("\t")
             gene = lineList[geneIndex]
             if gene in geneLengths and gene in gdiDict:
-                outputFile.write(f"{line}\t{geneLengths[gene][0]}\t{geneLengths[gene][1]}\t{gdiDict[key][0]}\t{gdiDict[key][1]}\n")
+                outputFile.write(f"{line}\t{geneLengths[gene][0]}\t{geneLengths[gene][1]}\t{gdiDict[gene][0]}\t{gdiDict[gene][1]}\n")
             elif gene in geneLengths and gene not in gdiDict:
                 outputFile.write(f"{line}\t{geneLengths[gene][0]}\t{geneLengths[gene][1]}\tNA\tNA\n")
             elif gene in gdiDict and gene not in geneLengths:
-                outputFile.write(f"{line}\tNA\tNA\t{gdiDict[key][0]}\t{gdiDict[key][1]}\n")
+                outputFile.write(f"{line}\tNA\tNA\t{gdiDict[gene][0]}\t{gdiDict[gene][1]}\n")
             else:
                 outputFile.write(f"{line}\tNA\tNA\tNA\tNA\n")
 
