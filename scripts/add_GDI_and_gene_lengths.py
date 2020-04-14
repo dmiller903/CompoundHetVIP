@@ -188,6 +188,7 @@ elif anonymizePatients == "n":
         outputFile.write(header)
         for line in queryFile:
             lineList = line.rstrip("\n").split("\t")
+            line = line.rstrip("\n")
             gene = lineList[geneIndex]
             if gene in geneLengths and gene in gdiDict:
                 outputFile.write(f"{line}\t{geneLengths[gene][0]}\t{geneLengths[gene][1]}\t{gdiDict[gene][0]}\t{gdiDict[gene][1]}\n")
