@@ -9,7 +9,7 @@ CompoundHetVIP is designed to be used with gVCF or VCF files. Please see [ch_pip
 
 3. Liftover trio files and individual files from GRCh38 to GRCh37
 
-4. Remove unplaced sites, ultiallelic sites, and duplicate sites from lifted files
+4. Remove unplaced sites, multiallelic sites, and duplicate sites from lifted files
 
 5. Separate VCF file into chromosome files, then generate plink files for each chromosome file
 
@@ -29,10 +29,10 @@ CompoundHetVIP is designed to be used with gVCF or VCF files. Please see [ch_pip
 
 13. Add Gene Damage Index Scores and Gene lengths to files
 
-The Docker image, [compound-het-vip](https://hub.docker.com/r/dmill903/compound-het-vip), contains all the tools needed to identify compound heterozygous variants using VCF or gVCF files. Tools available and used in the container include: Plink2 (1, 2), Picard (3), GATK4 (4), SAMtools (5), BCFtools (5), SHAPEIT2 (6), Beagle (7), Eagle2 (8), vt (9), SnpEff (10), GEMINI (11), Gene Damage Index (12), and any necessary dependencies.
+The Docker image, [compound-het-vip](https://hub.docker.com/r/dmill903/compound-het-vip), contains all the tools needed to identify compound heterozygous variants using VCF or gVCF files. Tools available and used in the container include: *Plink2* (1, 2), *Picard* (3), *GATK4* (4), *SAMtools* (5), *BCFtools* (5), *SHAPEIT2* (6), *Beagle* (7), *Eagle2* (8), *vt* (9), *SnpEff* (10), *GEMINI* (11), Gene Damage Index (12), and any necessary dependencies.
 
 ### Background
-A compound heterozygous variant occurs when a person inherits a variant from one parent within a specific gene and also inherits another variant from the other parent at a different position within the same gene. The effect of compound heterozygotic inheritance results in two recessive alleles that may cause disease. To detect these types of variants it is necessary to differentiate between paternally and maternally derived nucleotides. If sequencing has already taken place, computational algorithms can be used to help determine which nucleotides were inherited from each parent through a process termed “phasing”. 
+A compound heterozygous variant occurs when a person inherits a variant from one parent within a specific gene and also inherits another variant from the other parent at a different position within the same gene (13). The effect of compound heterozygotic inheritance results in two recessive alleles that may cause disease. To detect these types of variants it is necessary to differentiate between paternally and maternally derived nucleotides. If sequencing has already taken place, computational algorithms can be used to help determine which nucleotides were inherited from each parent through a process termed “phasing” (14). 
 
 Phasing requires specific file types which may vary depending on phasing software. Many phasing programs require that input files have been aligned to a specific reference genome, do not contain multiallelic positions, are free of repeat positions, and that each chromosome is phased separately. Figuring out how to prepare files for phasing can be challenging as passing files from program to program may invoke unforeseen incompatibilities. Also, installing specific programs can be challenging because many programs require various dependencies.
 
@@ -49,6 +49,8 @@ We have designed our Compound Heterozygous Variant Identification Pipeline (Comp
 7. 	S. R. Browning, B. L. Browning, Rapid and accurate haplotype phasing and missing-data inference for whole-genome association studies by use of localized haplotype clustering. Am. J. Hum. Genet. 81, 1084–1097 (2007).
 8. 	P.-R. Loh, P. Danecek, P. F. Palamara, C. Fuchsberger, Y. A Reshef, H. K Finucane, S. Schoenherr, L. Forer, S. McCarthy, G. R. Abecasis, R. Durbin, A. L Price, Reference-based phasing using the Haplotype Reference Consortium panel. Nat. Genet. 48, 1443–1448 (2016).
 9. 	A. Tan, G. R. Abecasis, H. M. Kang, Unified representation of genetic variants. Bioinformatics. 31, 2202–2204 (2015).
-10. P. Cingolani, A. Platts, L. L. Wang, M. Coon, T. Nguyen, L. Wang, S. J. Land, X. Lu, D. M. Ruden, A program for annotating and predicting the effects of single nucleotide polymorphisms, SnpEff: SNPs in the genome of Drosophila melanogaster strain w1118; iso-2; iso-3. Fly . 6, 80–92 (2012).
-11. U. Paila, B. A. Chapman, R. Kirchner, A. R. Quinlan, GEMINI: integrative exploration of genetic variation and genome annotations. PLoS Comput. Biol. 9, e1003153 (2013).
-12. Y. Itan, L. Shang, B. Boisson, E. Patin, A. Bolze, M. Moncada-Vélez, E. Scott, M. J. Ciancanelli, F. G. Lafaille, J. G. Markle, R. Martinez-Barricarte, S. J. de Jong, X.-F. Kong, P. Nitschke, A. Belkadi, J. Bustamante, A. Puel, S. Boisson-Dupuis, P. D. Stenson, J. G. Gleeson, D. N. Cooper, L. Quintana-Murci, J.-M. Claverie, S.-Y. Zhang, L. Abel, J.-L. Casanova, The human gene damage index as a gene-level approach to prioritizing exome variants. Proc. Natl. Acad. Sci. U. S. A. 112, 13615–13620 (2015).
+10. 	P. Cingolani, A. Platts, L. L. Wang, M. Coon, T. Nguyen, L. Wang, S. J. Land, X. Lu, D. M. Ruden, A program for annotating and predicting the effects of single nucleotide polymorphisms, SnpEff: SNPs in the genome of Drosophila melanogaster strain w1118; iso-2; iso-3. Fly . 6, 80–92 (2012).
+11. 	U. Paila, B. A. Chapman, R. Kirchner, A. R. Quinlan, GEMINI: integrative exploration of genetic variation and genome annotations. PLoS Comput. Biol. 9, e1003153 (2013).
+12. 	Y. Itan, L. Shang, B. Boisson, E. Patin, A. Bolze, M. Moncada-Vélez, E. Scott, M. J. Ciancanelli, F. G. Lafaille, J. G. Markle, R. Martinez-Barricarte, S. J. de Jong, X.-F. Kong, P. Nitschke, A. Belkadi, J. Bustamante, A. Puel, S. Boisson-Dupuis, P. D. Stenson, J. G. Gleeson, D. N. Cooper, L. Quintana-Murci, J.-M. Claverie, S.-Y. Zhang, L. Abel, J.-L. Casanova, The human gene damage index as a gene-level approach to prioritizing exome variants. Proc. Natl. Acad. Sci. U. S. A. 112, 13615–13620 (2015).
+13. 	T. Kamphans, P. Sabri, N. Zhu, V. Heinrich, S. Mundlos, P. N. Robinson, D. Parkhomchuk, P. M. Krawitz, Filtering for compound heterozygous sequence variants in non-consanguineous pedigrees. PLoS One. 8, e70151 (2013).
+14. 	Y. Choi, A. P. Chan, E. Kirkness, A. Telenti, N. J. Schork, Comparison of phasing strategies for whole human genomes. PLoS Genet. 14, e1007308 (2018).
