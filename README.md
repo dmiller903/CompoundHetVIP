@@ -3,31 +3,31 @@
 ### Quick Start
 CompoundHetVIP is designed to be used with gVCF or VCF files. Please see [ch_pipeline_example.pdf](https://github.com/dmiller903/CompoundHetVIP/blob/master/ch_pipeline_example.pdf) for example code and a description of each step of the pipeline. Here is a brief overview of each step:
 
-Step 1: Keep variant-only sites of VCF or gVCF files
+1. Keep variant-only sites of VCF or gVCF files
 
-Step 2: Combine each trio into a single file
+2. Combine each trio into a single file
 
-Step 3: Liftover trio files and individual files from GRCh38 to GRCh37
+3. Liftover trio files and individual files from GRCh38 to GRCh37
 
-Step 4: Remove unplaced sites, ultiallelic sites, and duplicate sites from lifted files
+4. Remove unplaced sites, ultiallelic sites, and duplicate sites from lifted files
 
-Step 5: Separate VCF file into chromosome files, then generate plink files for each chromosome file
+5. Separate VCF file into chromosome files, then generate plink files for each chromosome file
 
-Step 6: Phase each of the trios with a haplotype reference panel using SHAPEIT2, Beagle, or Eagle2
+6. Phase each of the trios with a haplotype reference panel using SHAPEIT2, Beagle, or Eagle2
 
-Step 7: Revert REF/ALT to be congruent with reference panel
+7. Revert REF/ALT to be congruent with reference panel
 
-Step 8: Concat and merge phased trio chromosome files into one VCF file
+8. Concat and merge phased trio chromosome files into one VCF file
 
-Step 9: Trim and normalize VCF file
+9. Trim and normalize VCF file
 
-Step 10: Annotate with snpEff
+10. Annotate with snpEff
 
-Step 11: Load VCF as GEMINI database
+11. Load VCF as GEMINI database
 
-Step 12: Query for *CH* variants
+12. Query for *CH* variants
 
-Step 13: Add Gene Damage Index Scores and Gene lengths to files
+13. Add Gene Damage Index Scores and Gene lengths to files
 
 The Docker image, [compound-het-vip](https://hub.docker.com/r/dmill903/compound-het-vip), contains all the tools needed to identify compound heterozygous variants using VCF or gVCF files. Tools available and used in the container include: Plink2 (1, 2), Picard (3), GATK4 (4), SAMtools (5), BCFtools (5), SHAPEIT2 (6), Beagle (7), Eagle2 (8), vt (9), SnpEff (10), GEMINI (11), Gene Damage Index (12), and any necessary dependencies.
 
