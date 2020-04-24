@@ -1,7 +1,7 @@
 ## Compound Heterozygous Variant Identification Pipeline (CompoundHetVIP)
 
 ### Quick Start
-CompoundHetVIP is designed to be used with gVCF or VCF files. Please see [ch_pipeline_example.pdf](https://github.com/dmiller903/CompoundHetVIP/blob/master/ch_pipeline_example.pdf) for example code and a description of each step of the pipeline. Here is a brief overview of each step:
+CompoundHetVIP is designed to be used with gVCF or VCF files. Please see [CompoundHetVIP_example.pdf](https://github.com/dmiller903/CompoundHetVIP/blob/master/CompoundHetVIP_example.pdf) for example code and a description of each step of the pipeline. Here is a brief overview of each step:
 
 1. Keep variant-only sites of VCF or gVCF files
 
