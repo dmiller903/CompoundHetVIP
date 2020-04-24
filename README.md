@@ -27,7 +27,7 @@ CompoundHetVIP is designed to be used with gVCF or VCF files. Please see [Compou
 
 12. Query for *CH* variants
 
-13. Add Gene Damage Index Scores and Gene lengths to files
+13. Add [Gene Damage Index](http://lab.rockefeller.edu/casanova/GDI) Scores and Gene lengths to files
 
 The Docker image, [compound-het-vip](https://hub.docker.com/r/dmill903/compound-het-vip), contains all the tools needed to identify compound heterozygous variants using VCF or gVCF files. Tools available and used in the container include: *Plink2* (1, 2), *Picard* (3), *GATK4* (4), *SAMtools* (5), *BCFtools* (5), *SHAPEIT2* (6), *Beagle* (7), *Eagle2* (8), *vt* (9), *SnpEff* (10), *GEMINI* (11), Gene Damage Index (12), and any necessary dependencies.
 
