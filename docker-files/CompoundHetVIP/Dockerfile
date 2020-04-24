@@ -34,8 +34,8 @@ apt-get update \
   # Install Java
   && conda install -c bioconda java-jdk=8.0.112 \
   # Install Plink2
-  && wget --no-check-certificate https://github.com/dmiller903/ch-pipeline/raw/master/plink2_linux_x86_64_20190928.zip \
-  && unzip /plink2_linux_x86_64_20190928.zip \
+  && wget --no-check-certificate "https://files.osf.io/v1/resources/3znuj/providers/osfstorage/5d950c8b4ab86b001af8b807?action=download&direct&version=1" -O /plink2.zip \
+  && unzip /plink2.zip \
   # Install Picard
   && conda install -c bioconda picard=2.21.1 \
   # Install GATK4
