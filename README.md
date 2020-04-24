@@ -39,6 +39,9 @@ Phasing requires specific file types which may vary depending on phasing softwar
 ### Our Methodology
 We have designed our Compound Heterozygous Variant Identification Pipeline (CompoundHetVIP) to overcome many of the time-consuming challenges that researchers may face when trying to phase patient data. By providing reproducible scripts and a Docker Image where these scripts are executed, other researchers will be able to examine our methodology in detail and apply it to their data. Encapsulating our code within containers helps control what software versions are used, what system libraries are used, and creates a cohesive computational environment.
 
+### Contact
+If you encounter an issue, please add to the [issue page](https://github.com/dmiller903/CompoundHetVIP/issues)
+
 ### References
 1. 	S. Purcell, C. Chang, PLINK 2.0 (www.cog-genomics.org/plink/2.0/).
 2. 	C. C. Chang, C. C. Chow, L. C. Tellier, S. Vattikuti, S. M. Purcell, J. J. Lee, Second-generation PLINK: rising to the challenge of larger and richer datasets. Gigascience. 4, 7 (2015).
