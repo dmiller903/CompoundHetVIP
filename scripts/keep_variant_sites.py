@@ -12,13 +12,14 @@ char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
 parser = argparse.ArgumentParser(description='If input files are VCF and parent VCFs are unavailable or not being \
-used, this script does not need to be used. When using VCF files as input, the optional parameter "--is_gvcf" needs \
-to be changed to "n". This script will filter each parent VCF for sites that only occur in the child of that family. \
-When using gVCF files, this scrip behaves a little differently. gVCF files are different from VCF files in that they \
-contain information for every nucleotide position, including non-variant positions. Therefore, gVCF files are large \
-and would take a long time to process if the non-variant positions were included throughout the whole pipeline. Thus, \
-this script takes the sample (patient) gVCF and removes all non-variant sites. In addition, if parental gVCFs are \
-included, the script filters each parent file for sites that only occur in the affected sample of that family.')
+used, this script does not need to be used. Whether using gVCF or VCF files, they must be gzipped. When using VCF \
+files as input, the optional parameter "--is_gvcf" needs to be changed to "n". This script will filter each parent \
+VCF for sites that only occur in the child of that family. When using gVCF files, this scrip behaves a little \
+differently. gVCF files are different from VCF files in that they contain information for every nucleotide position, \
+including non-variant positions. Therefore, gVCF files are large and would take a long time to process if the \
+non-variant positions were included throughout the whole pipeline. Thus, this script takes the sample (patient) gVCF \
+and removes all non-variant sites. In addition, if parental gVCFs are included, the script filters each parent file for \
+sites that only occur in the affected sample of that family.')
 
 parser.add_argument('sample_file', help='Sample (patient) File. Must be gzipped.')
 parser.add_argument('output_path', help='Path to where output file(s) should go')
