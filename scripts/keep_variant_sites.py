@@ -11,23 +11,23 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description='If input files are VCF and no parent files are available, then this script \
-does not need to be used. However, if files are VCF files and parent files are available, the script will filter each \
-parent gVCF file for sites that only occur in the child of that family. The optional parameter, "--is_gvcf" needs to be \
-changed to "n". gVCF files are different from VCF files in that they contain information for every position, including \
-non-variant positions. Therefore, these files are large and would take a long time to process if the non-variant \
-positions were included throughout the whole compound heterozygous pipeline. "keep_variant_sites.py" takes each sample \
-file and removes all non-variant sites. If parental files are included, the script then filters each parent file for \
-sites that only occur in the affected sample of that family.')
+parser = argparse.ArgumentParser(description='If input files are VCF and parent VCFs are unavailable or not being \
+used, this script does not need to be used. When using VCF files as input, the optional parameter "--is_gvcf" needs \
+to be changed to "n". This script will filter each parent VCF for sites that only occur in the child of that family. \
+When using gVCF files, this scrip behaves a little differently. gVCF files are different from VCF files in that they \
+contain information for every nucleotide position, including non-variant positions. Therefore, gVCF files are large \
+and would take a long time to process if the non-variant positions were included throughout the whole pipeline. Thus, \
+this script takes the sample (patient) gVCF and removes all non-variant sites. In addition, if parental gVCFs are \
+included, the script filters each parent file for sites that only occur in the affected sample of that family.')
 
-parser.add_argument('sample_file', help='Sample File')
+parser.add_argument('sample_file', help='Sample (patient) File. Must be gzipped.')
 parser.add_argument('output_path', help='Path to where output file(s) should go')
-parser.add_argument('--parent_1_file', help='Maternal or Paternal File of Sample')
-parser.add_argument('--parent_2_file', help='Maternal or Paternal File of Sample')
-parser.add_argument('--output_suffix', help='Suffix for each output file (do not include .gz at end as this will be included \
-when the file is bgzipped)', default='_parsed.vcf')
-parser.add_argument('--is_gvcf', help='If a gVCF file is used, all non-variant sites will be filtered out of the sample file \
-and a new VCF will be created', default='y')
+parser.add_argument('--parent_1_file', help='Maternal or Paternal File of Sample. Must be gzipped')
+parser.add_argument('--parent_2_file', help='Maternal or Paternal File of Sample. Must be gzipped')
+parser.add_argument('--output_suffix', help='Suffix for each output file (do not include .gz at end as this will be \
+included when the file is bgzipped)', default='_parsed.vcf')
+parser.add_argument('--is_gvcf', help='If a gVCF file is used, all non-variant sites will be filtered out of the sample \
+file and a new VCF will be created', default='y')
 
 args = parser.parse_args()
 
