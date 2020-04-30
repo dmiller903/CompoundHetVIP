@@ -8,7 +8,7 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description="Annotate VCF using snpEff")
+parser = argparse.ArgumentParser(description="Annotate VCF using snpEff. GRCH37.75 is used as the reference genome.")
 
 parser.add_argument('input_vcf', help='Input file')
 parser.add_argument('output_file', help='Name of output file')

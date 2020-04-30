@@ -10,10 +10,10 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description="Trim and normalize VCF file")
+parser = argparse.ArgumentParser(description="Trim and normalize VCF file using vt tools.")
 
-parser.add_argument('input_vcf', help='Input file')
-parser.add_argument('output_file', help='Name of output file')
+parser.add_argument('input_vcf', help='Name of input file.')
+parser.add_argument('output_file', help='Name of output file.')
 
 args = parser.parse_args()
 

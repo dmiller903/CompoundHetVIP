@@ -10,7 +10,7 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description="Positions that are multiallelic or are duplicates are removed because \
+parser = argparse.ArgumentParser(description="Positions that are multiallelic or duplicates are removed because \
 programs such as PLINK and SHAPEIT2 can not handle these types of sites. Also, positions that contain missing genotype \
 information (i.e. './.') in more then one sample are removed to improve phasing accuracy.")
 

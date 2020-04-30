@@ -12,13 +12,13 @@ char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
 parser = argparse.ArgumentParser(description="The parameters for phasing are set so that SHAPEIT2 uses family \
-relationship genotype information and also uses a haplotype reference panel")
+relationship genotype information and also uses a haplotype reference panel.")
 
 parser.add_argument('input_file', help='Input file. Use Plink files (bed, bim, fam) if trio, VCF if not trio \
-(do not include suffix if plink files)')
-parser.add_argument('output_file', help='Name of output file (without suffix)')
+(do not include suffix if plink files).')
+parser.add_argument('output_file', help='Name of output file (without suffix).')
 parser.add_argument('chromosome_number', help='SHAPEIT2 phases chromosome by chromosome, so it needs to be known which \
-chromosome to phase')
+chromosome to phase.')
 parser.add_argument('--is_trio', help='If the VCF files are not trios, indicate with "n".', default='y')
 
 args = parser.parse_args()

@@ -11,8 +11,8 @@ char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
 parser = argparse.ArgumentParser(description='Some phasing programs and other programs such as GEMINI, require that VCF \
- or gVCF files be aligned to GRCh37. Therefore, this step takes an input VCF/gVCF that is aligned to GRCh38 converts it \
-to GRCh37 using GATKs "CombineGVCFs" tool')
+files be aligned to GRCh37. Therefore, this script takes an input VCF that is aligned to GRCh38 and \
+converts it to GRCh37 using Picards "LiftoverVcf" tool.')
 
 parser.add_argument('input_vcf', help='Input VCF file')
 parser.add_argument('output_vcf', help='Path and name of output VCF file. Include ".gz" at the end of the file \

@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description="Annotate VCF using snpEff")
 parser.add_argument('input_vcf', help='Annotated VCF File')
 parser.add_argument('output_database', help='Name of output database (name needs to end in .db)')
 parser.add_argument('--fam_file', help="If you have family's in the VCF file, include a fam file")
-parser.add_argument('--num_cores', help='Loading will go quicker if more cores are available.', default=2)
+parser.add_argument('--num_cores', help='Loading will go quicker if more cores are available', default=2)
 
 args = parser.parse_args()
 

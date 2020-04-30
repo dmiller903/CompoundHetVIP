@@ -9,15 +9,15 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description='Creates a combined trio file using GATKs "CombineGVCFs" and GenotypeGVCFs \
-tools if gVCF files are used. If VCF files are used, the trio will be combined with bcftools')
+parser = argparse.ArgumentParser(description='If gVCF files are used, this script creates a combined trio file using \
+GATKs "CombineGVCFs" and "GenotypeGVCFs" tools. If VCF files are used, the trio will be combined with "bcftools".')
 
 parser.add_argument('proband_vcf', help='Proband VCF File')
 parser.add_argument('parent_1_vcf', help='Maternal or Paternal VCF File of Proband')
 parser.add_argument('parent_2_vcf', help='Maternal or Paternal VCF File of Proband')
 parser.add_argument('output_vcf', help='Path and name of combined vcf output file')
-parser.add_argument('--is_gvcf', help="If a gVCF file is used, GATK's combineGVCFs will be used. If VCF files are used \
-bcftools merge will be used", default='y')
+parser.add_argument('--is_gvcf', help="If a gVCF file is used, GATK tools are used to combine files. If VCF files are used, \
+bcftools is used", default='y')
 
 args = parser.parse_args()
 

@@ -7,7 +7,8 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description="Annotate VCF using snpEff")
+parser = argparse.ArgumentParser(description="Query data for compound heterozygous and de novo variants using various \
+filters.")
 
 parser.add_argument('input_database', help='GEMINI database')
 parser.add_argument('output_file_prefix', help='Prefix of output file, including path')
