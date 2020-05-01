@@ -77,23 +77,23 @@ for key, value in nestedDict.items():
 # concatenate chromosome files into single files ordered by chromosome number
 concatFiles = []
 for key, value in filesToConcat.items():
-    for file in value:
-        os.system(f"gzip -d {file}")
-        os.system(f"bgzip -f {file.rstrip('.gz')}")
-        os.system(f"tabix -fp vcf {file}")
-    tempOutput = f"/tmp/{key}_phased_combined.vcf"
+    #for file in value:
+        #os.system(f"gzip -d {file}")
+        #os.system(f"bgzip -f {file.rstrip('.gz')}")
+        #os.system(f"tabix -fp vcf {file}")
+    tempOutput = f"/tmp/{key}_phased_combined.vcf.gz"
     files = " ".join(value)
-    os.system(f"bcftools concat {files} -o {tempOutput}")
-    os.system(f"bgzip -f {tempOutput} && tabix -fp vcf {tempOutput}.gz")
-    concatFiles.append(f'{tempOutput}.gz')
+    os.system(f"bcftools concat {files} -o {tempOutput} -O z")
+    os.system(f"tabix -fp vcf {tempOutput}")
+    concatFiles.append(f'{tempOutput}')
 
 # Merge all phased, concatenated, files into one
 if mergeFiles == "y":
     concatFilesString = " ".join(concatFiles)
-    os.system(f"bcftools merge -m both {concatFilesString} -o {outputFile}")
-    os.system(f"bgzip -f {outputFile} && tabix -fp vcf {outputFile}.gz")
+    os.system(f"bcftools merge -m both {concatFilesString} -o {outputFile}.gz -O z")
+    os.system(f"tabix -fp vcf {outputFile}.gz")
 elif mergeFiles == "n":
-    os.system(f"mv {tempOutput}.gz {outputFile}.gz")
+    os.system(f"mv {tempOutput} {outputFile}.gz")
 
 # Create a merged family file
 # Create a dictionary where each sample has the rest of the family information needed for the family file
