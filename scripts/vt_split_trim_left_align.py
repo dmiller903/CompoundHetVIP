@@ -37,7 +37,7 @@ if not os.path.exists("/references/human_g1k_v37.fasta"):
 # Use VT to split, trim and left align the phased samples.
 os.system(f"/root/miniconda2/bin/vt decompose -s {inputFile} \
 | /root/miniconda2/bin/vt normalize -n -r /references/human_g1k_v37.fasta - > \
-{outputFile}")
+{outputFile} && gzip {outputFile}")
 
 # Output message and time complete
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
