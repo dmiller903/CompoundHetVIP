@@ -19,7 +19,7 @@ args = parser.parse_args()
 
 #Create variables of each argument from argparse
 inputFile = args.input_vcf
-outputFile = args.output_file.rsrip(".gz")
+outputFile = args.output_file.rstrip(".gz")
 
 # Download reference files if needed
 if not os.path.exists("/references/human_g1k_v37.fasta"):
