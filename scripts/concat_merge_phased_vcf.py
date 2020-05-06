@@ -75,10 +75,11 @@ for key, value in nestedDict.items():
 # concatenate chromosome files into single files ordered by chromosome number
 concatFiles = []
 for key, value in filesToConcat.items():
-    #for file in value:
-        #os.system(f"gzip -d {file}")
-        #os.system(f"bgzip -f {file.rstrip('.gz')}")
-        #os.system(f"tabix -fp vcf {file}")
+    for file in value:
+        os.system(f"gzip -d {file}")
+        os.system(f"bgzip -f {file.rstrip('.gz')}")
+        os.system(f"tabix -fp vcf {file}")
+        print(file)
     tempOutput = f"/tmp/{key}_phased_combined.vcf.gz"
     files = " ".join(value)
     os.system(f"bcftools concat {files} -o {tempOutput} -O z")
