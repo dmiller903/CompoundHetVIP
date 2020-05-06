@@ -31,11 +31,11 @@ if not os.path.exists("/references/hg38ToHg19.over.chain"):
         https://files.osf.io/v1/resources/3znuj/providers/osfstorage/5d9ddd0ba7bc73000ce87e38/?zip= -O /tmp/references.zip \
         && unzip /tmp/references.zip -d /tmp/references \
         && rm /tmp/references.zip \
-        && /root/miniconda2/bin/bgzip -d /tmp/references/human_g1k_v37_modified.fasta.gz \
-        && /root/miniconda2/bin/bgzip -d /tmp/references/hg38ToHg19.over.chain.gz \
-        && /root/miniconda2/bin/bgzip -d /tmp/references/Homo_sapiens_assembly38.fasta.gz \
-        && /root/miniconda2/bin/bgzip -d /tmp/references/Homo_sapiens_assembly38.dict.gz \
-        && /root/miniconda2/bin/bgzip -d /tmp/references/Homo_sapiens_assembly38.fasta.fai.gz")
+        && bgzip -d /tmp/references/human_g1k_v37_modified.fasta.gz \
+        && gzip -d /tmp/references/hg38ToHg19.over.chain.gz \
+        && bgzip -d /tmp/references/Homo_sapiens_assembly38.fasta.gz \
+        && bgzip -d /tmp/references/Homo_sapiens_assembly38.dict.gz \
+        && bgzip -d /tmp/references/Homo_sapiens_assembly38.fasta.fai.gz")
     for file in glob.glob("/tmp/references/*"):
         fileName = file.split("/")[-1]
         if not os.path.exists(f"/references/{fileName}"):
