@@ -10,12 +10,13 @@ char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
 parser = argparse.ArgumentParser(description='If gVCF files are used, this script creates a combined trio file using \
-GATKs "CombineGVCFs" and "GenotypeGVCFs" tools. If VCF files are used, the trio will be combined with "bcftools".')
+GATKs "CombineGVCFs" and "GenotypeGVCFs" tools. If VCF files are used, the trio will be combined with "bcftools". If \
+you are not working with trios, this script is not necessary.')
 
 parser.add_argument('proband_vcf', help='Proband VCF File')
 parser.add_argument('parent_1_vcf', help='Maternal or Paternal VCF File of Proband')
 parser.add_argument('parent_2_vcf', help='Maternal or Paternal VCF File of Proband')
-parser.add_argument('output_vcf', help='Path and name of combined vcf output file')
+parser.add_argument('output_vcf', help='Path and name of combined vcf output file. Include ".gz" at the end of the file name')
 parser.add_argument('--is_gvcf', help="If a gVCF file is used, GATK tools are used to combine files. If VCF files are used, \
 bcftools is used", default='y')
 
@@ -56,6 +57,7 @@ if isGvcf == "y":
     except:
         print("Trio not combined, there was an error detected by GATK")
 
+# Use bcftools to combine all trios into one vcf and then genotype the combined trio vcf
 elif isGvcf == "n":
     for file in files:
         os.system(f"tabix -fp vcf {file}")

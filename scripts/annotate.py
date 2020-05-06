@@ -10,8 +10,8 @@ char = '\n' + ('*' * 70) + '\n'
 # Argparse Information
 parser = argparse.ArgumentParser(description="Annotate VCF using snpEff. GRCH37.75 is used as the reference genome.")
 
-parser.add_argument('input_vcf', help='Input file')
-parser.add_argument('output_file', help='Name of output file')
+parser.add_argument('input_vcf', help='Input VCF file')
+parser.add_argument('output_file', help='Name of output VCF file')
 
 args = parser.parse_args()
 
@@ -19,7 +19,7 @@ args = parser.parse_args()
 inputFile = args.input_vcf
 outputFile = args.output_file
 
-# Download annotation files
+# Download annotation files if necessary
 if not os.path.exists("/snpEff/./data/GRCh37.75/sequence.HSCHR6_MHC_SSTO.bin"):
     os.system("java -jar /snpEff/snpEff.jar download -v GRCh37.75")
 

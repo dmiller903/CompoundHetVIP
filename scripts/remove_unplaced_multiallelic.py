@@ -21,7 +21,7 @@ args = parser.parse_args()
 
 # Create variables of each argument from argparse
 inputFile = args.input_vcf
-outputFile = args.output_vcf
+outputFile = args.output_vcf.rstrip(".gz")
 tempFile = "/tmp/temp.vcf"
 fileWithoutSuffix = re.findall(r'([\w\-_/]+)\.', outputFile)[0]
 duplicateFile = f"{fileWithoutSuffix}_removed_duplicates.vcf"
@@ -61,7 +61,7 @@ with gzip.open(tempFile, "rt") as inputFile:
             elif chromosome in posDict and pos in posDict[chromosome]:
                 dupDict[chromosome].add(pos)
 
-with gzip.open(tempFile, "rt") as inputFile, open(outputFile.rstrip(".gz"), "wt") as outFile, open(duplicateFile, "w") as duplicates:
+with gzip.open(tempFile, "rt") as inputFile, open(outputFile, "wt") as outFile, open(duplicateFile, "w") as duplicates:
     for line in inputFile:
         if not line.startswith("#"):
             splitLine = line.split("\t")
@@ -75,7 +75,7 @@ with gzip.open(tempFile, "rt") as inputFile, open(outputFile.rstrip(".gz"), "wt"
             outFile.write(line)
             duplicates.write(line)
 
-os.system(f"bgzip -f {outputFile.rstrip('.gz')}")
+os.system(f"bgzip -f {outputFile}")
 
 # Output time it took to complete
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)

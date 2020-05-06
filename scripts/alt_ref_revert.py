@@ -5,6 +5,7 @@ import argparse
 import re
 import gzip
 import glob
+
 #Keep track of when the script began
 startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
@@ -16,16 +17,16 @@ only has 3 samples, the ALT allele is more common in the trio and becomes the RE
 alleles of the phased VCF files are congruent with the REF/ALT of the reference genome. In addition, sites with Mendel \
 errors are removed.")
 
-parser.add_argument('input_vcf', help='Input file')
-parser.add_argument('output_file', help='Name of output file')
+parser.add_argument('input_vcf', help='Input VCF file')
+parser.add_argument('output_file', help='Name of output VCF file')
 parser.add_argument('chromosome_number', help='Chromosome number is needed so the script can determine which reference \
-file to use.')
+file to use')
 
 args = parser.parse_args()
 
 #Create variables of each argument from argparse
 inputFile = args.input_vcf
-outputFile = args.output_file
+outputFile = args.output_file.rstrip(".gz")
 chromosome = args.chromosome_number
 tempFile = "/tmp/" + re.findall(r'/?([\w\-_\.]+)', outputFile)[-1]
 

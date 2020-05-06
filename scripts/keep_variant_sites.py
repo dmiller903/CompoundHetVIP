@@ -21,14 +21,13 @@ non-variant positions were included throughout the whole pipeline. Thus, this sc
 and removes all non-variant sites. In addition, if parental gVCFs are included, the script filters each parent file for \
 sites that only occur in the affected sample of that family.')
 
-parser.add_argument('sample_file', help='Sample (patient) File. Must be gzipped.')
+parser.add_argument('sample_file', help='Sample (patient) File. Must be gzipped')
 parser.add_argument('output_path', help='Path to where output file(s) should go')
-parser.add_argument('--parent_1_file', help='Maternal or Paternal File of Sample. Must be gzipped.')
-parser.add_argument('--parent_2_file', help='Maternal or Paternal File of Sample. Must be gzipped.')
-parser.add_argument('--output_suffix', help='Suffix for each output file (do not include .gz at end as this will be \
-included when the file is bgzipped)', default='_parsed.vcf')
+parser.add_argument('--parent_1_file', help='Maternal or Paternal File of Sample. Must be gzipped')
+parser.add_argument('--parent_2_file', help='Maternal or Paternal File of Sample. Must be gzipped')
+parser.add_argument('--output_suffix', help='Suffix for each output file (output file will be bgzipped)', default='_parsed.vcf.gz')
 parser.add_argument('--is_gvcf', help='If a gVCF file is used, all non-variant sites will be filtered out of the sample \
-file and a new VCF will be created.', default='y')
+file and a new VCF will be created', default='y')
 
 args = parser.parse_args()
 
@@ -36,11 +35,9 @@ args = parser.parse_args()
 sampleFile = args.sample_file
 parent1File = args.parent_1_file
 parent2File = args.parent_2_file
-outputPath = args.output_path
+outputPath = args.output_path.rstrip("/")
 isGvcf = args.is_gvcf
-if outputPath.endswith("/"):
-    outputPath = outputPath[0:-1]
-outputSuffix = args.output_suffix
+outputSuffix = args.output_suffix.rstrip(".gz")
 
 #Filter each sample file, remove  variants-only sites, create a dictionary of variant-only sites
 fileName = re.findall(r'/?([\w\-_]+)\.?g?\.vcf\.gz', sampleFile)[0]

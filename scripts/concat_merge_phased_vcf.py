@@ -17,20 +17,18 @@ concatenates all phased chromosomes into a single file, then merges different co
 
 parser.add_argument('phased_files_path', help='A path where all the phased files are stored. Only phased files from \
 a single phasing method should be in this folder. Also, if you have .fam files and you are merging different families into \
-one file, provide .fam files in this folder as well.')
+one file, provide .fam files in this folder as well')
 parser.add_argument('output_file', help='Name of output file')
 parser.add_argument('--output_fam_file', help='Name of the output .fam file. If you are merging files from different \
-families, provide a .fam file in the phased_files_path for each of the different files that are to be merged.')
+families, provide a .fam file in the phased_files_path for each of the different files that are to be merged')
 parser.add_argument('--merge_files', help='If multiple sample files need to be merged after chromosomes are combined, \
 please indicate by "y"', default="n")
 
 args = parser.parse_args()
 
 #Create variables of each argument from argparse
-filePath = args.phased_files_path
-outputFile = args.output_file
-if filePath.endswith("/"):
-    filePath = filePath[0:-1]
+filePath = args.phased_files_path.rstrip("/")
+outputFile = args.output_file.rstrip(".gz")
 famOutput = args.output_fam_file
 mergeFiles = args.merge_files
 
