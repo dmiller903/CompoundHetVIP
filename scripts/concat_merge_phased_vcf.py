@@ -71,7 +71,6 @@ for key, value in nestedDict.items():
     for key2, value2 in sorted(value.items()):
         filesToConcat[key].append(value2)
 
-
 # concatenate chromosome files into single files ordered by chromosome number
 concatFiles = []
 for key, value in filesToConcat.items():
