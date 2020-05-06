@@ -33,9 +33,9 @@ if not os.path.exists("/references/hg38ToHg19.over.chain"):
         && rm /tmp/references.zip \
         && bgzip -d /tmp/references/human_g1k_v37_modified.fasta.gz \
         && gzip -d /tmp/references/hg38ToHg19.over.chain.gz \
-        && bgzip -d /tmp/references/Homo_sapiens_assembly38.fasta.gz \
-        && bgzip -d /tmp/references/Homo_sapiens_assembly38.dict.gz \
-        && bgzip -d /tmp/references/Homo_sapiens_assembly38.fasta.fai.gz")
+        && gzip -d /tmp/references/Homo_sapiens_assembly38.fasta.gz \
+        && gzip -d /tmp/references/Homo_sapiens_assembly38.dict.gz \
+        && gzip -d /tmp/references/Homo_sapiens_assembly38.fasta.fai.gz")
     for file in glob.glob("/tmp/references/*"):
         fileName = file.split("/")[-1]
         if not os.path.exists(f"/references/{fileName}"):
