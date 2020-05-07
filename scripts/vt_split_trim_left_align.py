@@ -27,7 +27,7 @@ if not os.path.exists("/references/human_g1k_v37.fasta"):
     https://files.osf.io/v1/resources/3znuj/providers/osfstorage/5dc57b1f7f37e3000ecaed96/?zip= -O /tmp/references.zip \
     && unzip /tmp/references.zip -d /tmp/references \
     && rm /tmp/references.zip \
-    && bgzip -d /tmp/references/human_g1k_v37.fasta.gz")
+    && gzip -d /tmp/references/human_g1k_v37.fasta.gz")
     for file in glob.glob("/tmp/references/*"):
         fileName = file.split("/")[-1]
         if not os.path.exists(f"/references/{fileName}") and fileName != "readme":
