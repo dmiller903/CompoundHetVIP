@@ -1,6 +1,7 @@
 import os
 import time
 import argparse
+import concurrent.futures
 
 #Keep track of when the script began
 startTime = time.time()
@@ -38,7 +39,7 @@ query1 = f'gemini comp_hets --columns "chrom, start, vcf_id, ref, alt, gene, imp
 queryList.append(query1)
 
 # Filter CH Variants with minor allele frequency <= 0.01 and cadd >= 15 (Less Stringent)
- query2 = f'gemini comp_hets --columns "chrom, start, vcf_id, ref, alt, gene, impact_severity, aaf_1kg_all, cadd_scaled, impact, biotype" \
+query2 = f'gemini comp_hets --columns "chrom, start, vcf_id, ref, alt, gene, impact_severity, aaf_1kg_all, cadd_scaled, impact, biotype" \
 --filter "(impact_severity = {high} or is_lof = 1) or (impact_severity = {med} and aaf_1kg_all <= 0.01 and cadd_scaled >=15)" \
 {inputDatabase} \
 > {outputName}_ch_impactHM_aaf01_cadd15.tsv'
