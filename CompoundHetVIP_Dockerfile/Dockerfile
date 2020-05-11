@@ -20,7 +20,7 @@ apt-get update \
   automake=1:1.16.1-4 \
   autoconf=2.69-11 \
   autogen=1:5.18.12-4 \
-  git=1:2.20.1-2+deb10u1 \
+  git=1:2.20.1-2+deb10u3 \
   # Install miniconda2 and config channels
   && wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-4.7.10-Linux-x86_64.sh \
   && bash Miniconda2-4.7.10-Linux-x86_64.sh -b -p \
