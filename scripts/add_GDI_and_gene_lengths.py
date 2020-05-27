@@ -128,7 +128,7 @@ with open(geminiQuery) as queryFile, open("/tmp/new_query.txt", 'w') as newQuery
 
 # Create a list of genes that are in the GEMINI query and a file of genes
 newQueryFile = "/tmp/new_query.txt"
-geneList = []
+geneSet = set()
 with open(newQueryFile) as queryFile, open("/gene_list.txt", 'w') as geneFile:
     header = queryFile.readline()
     headerList = header.rstrip("\n").split("\t")
