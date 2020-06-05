@@ -76,10 +76,11 @@ def getLineInfo(lineList):
     return(start, gene, ref, alt, impact, cadd, maf, lof, exonic)
 
 # Create a .tsv that has all pertinent information for compound heterozygous identification
+impactSeverity = "'LOW'"
 geminiTsv = f"{inputFile.replace('.db', '_gemini.tsv')}"
 if not os.path.exists(geminiTsv):
     os.system(f'gemini query --header -q "select chrom, start, vcf_id, ref, alt, gene, is_exonic, impact_severity, \
-        is_lof, aaf_1kg_all, cadd_scaled, impact, biotype, (gts).(*) from variants" \
+        is_lof, aaf_1kg_all, cadd_scaled, impact, biotype, (gts).(*) from variants where impact_severity != {impactSeverity}" \
         {inputFile} \
         > {geminiTsv}')
 
