@@ -47,6 +47,8 @@ def getNumericGenotype(genotype, ref, alt):
             secondAllele = "."
         newGenotype = f"{firstAllele}|{secondAllele}"
         return(newGenotype)
+    else:
+        return(".|.")
 
 #Function to grab information from header of input file
 def getHeaderInfo(headerList):
@@ -100,12 +102,14 @@ if familyFile is not None:
                 familyDict[f"gts.{lineList[1]}"] = [f"gts.{lineList[2]}", f"gts.{lineList[3]}"]
             else:
                 parentList.append(f"gts.{lineList[1]}")
+
 """
 Iterate through inputFile in order to create two dictionaries: sampleGenotype and samplePositions. The key of 
 sampleGenotype is the sample ID and value is a dictionary where the key is a gene and the value is a list of all 
 genotypes ("0|1", "1|0", or "0|0") for that gene that meet specific CADD score, minor allele frequency, and impact 
 severity criteria. The samplePositions has the same information, except the list for each gene is genotype positions.
 """
+
 sampleGenotype = {}
 samplePositions = {}
 sampleIndexes = []
@@ -126,10 +130,10 @@ with open(geminiTsv) as geminiFile:
                     sample = headerList[sampleIndex]
                     genotype = lineList[sampleIndex]
                     newGenotype = getNumericGenotype(genotype, ref, alt)
-                    if gene not in sampleGenotype[sample]:
+                    if gene not in sampleGenotype[sample] and "." not in newGenotype:
                         sampleGenotype[sample][gene] = [newGenotype]
                         samplePositions[sample][gene] = [start]
-                    elif gene in sampleGenotype[sample]:
+                    elif gene in sampleGenotype[sample] and "." not in newGenotype:
                         sampleGenotype[sample][gene].append(newGenotype)
                         samplePositions[sample][gene].append(start)
         elif cadd == "None" or maf == "None":
@@ -138,10 +142,10 @@ with open(geminiTsv) as geminiFile:
                     sample = headerList[sampleIndex]
                     genotype = lineList[sampleIndex]
                     newGenotype = getNumericGenotype(genotype, ref, alt)
-                    if gene not in sampleGenotype[sample]:
+                    if gene not in sampleGenotype[sample] and "." not in newGenotype:
                         sampleGenotype[sample][gene] = [newGenotype]
                         samplePositions[sample][gene] = [start]
-                    elif gene in sampleGenotype[sample]:
+                    elif gene in sampleGenotype[sample] and "." not in newGenotype:
                         sampleGenotype[sample][gene].append(newGenotype)
                         samplePositions[sample][gene].append(start)
         elif cadd != "None" and inputMaf == "None":
@@ -150,10 +154,10 @@ with open(geminiTsv) as geminiFile:
                     sample = headerList[sampleIndex]
                     genotype = lineList[sampleIndex]
                     newGenotype = getNumericGenotype(genotype, ref, alt)
-                    if gene not in sampleGenotype[sample]:
+                    if gene not in sampleGenotype[sample] and "." not in newGenotype:
                         sampleGenotype[sample][gene] = [newGenotype]
                         samplePositions[sample][gene] = [start]
-                    elif gene in sampleGenotype[sample]:
+                    elif gene in sampleGenotype[sample] and "." not in newGenotype:
                         sampleGenotype[sample][gene].append(newGenotype)
                         samplePositions[sample][gene].append(start)
 print("Sample Dictionaries Created.")
@@ -162,6 +166,7 @@ print("Sample Dictionaries Created.")
 Use sampleGenotype and samplePositions to generate a new dictionaries where the key is the sample ID and the value is 
 a dictionary where the key is a gene and the value is a list of genotypes (or positions) where CH variant(s) are found.
 """
+
 chPositionDict = {}
 chGenotypeDict = {}
 if familyFile is None:
@@ -250,10 +255,11 @@ with open(geminiTsv) as geminiFile, open(outputFile, "w") as outputFile:
                         elif start in chPositionDict[sample][gene] and len(chPositionDict[sample][gene]) >= 2:
                             genotype = lineList[sampleIndex]
                             numericGenotype = getNumericGenotype(genotype, ref, alt)
-                            columnInfo = lineList[0:13]
-                            columnStr = "\t".join(columnInfo)
-                            newLine = f"{columnStr}\t{numericGenotype}\t{sample.lstrip('gts.')}\n"
-                            outputFile.write(newLine)
+                            if "." not in numericGenotype and numericGenotype in ["1|0", "0|1"]:
+                                columnInfo = lineList[0:13]
+                                columnStr = "\t".join(columnInfo)
+                                newLine = f"{columnStr}\t{numericGenotype}\t{sample.replace('gts.', '')}\n"
+                                outputFile.write(newLine)
     else:
         for line in geminiFile:
             lineList = line.rstrip("\n").split("\t")
@@ -263,10 +269,12 @@ with open(geminiTsv) as geminiFile, open(outputFile, "w") as outputFile:
                 if gene in chPositionDict[sample] and start in chPositionDict[sample][gene] and len(chPositionDict[sample][gene]) >= 2:
                     genotype = lineList[sampleIndex]
                     numericGenotype = getNumericGenotype(genotype, ref, alt)
-                    columnInfo = lineList[0:13]
-                    columnStr = "\t".join(columnInfo)
-                    newLine = f"{columnStr}\t{numericGenotype}\t{sample.lstrip('gts.')}\n"
-                    outputFile.write(newLine)
+                    if "." not in numericGenotype and numericGenotype in ["1|0", "0|1"]:
+                        columnInfo = lineList[0:13]
+                        columnStr = "\t".join(columnInfo)
+                        newLine = f"{columnStr}\t{numericGenotype}\t{sample.replace('gts.', '')}\n"
+                        outputFile.write(newLine)
+
 #Output time information
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
 timeElapsedHours = round(timeElapsedMinutes / 60, 2)
