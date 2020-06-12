@@ -24,7 +24,9 @@ args = parser.parse_args()
 inputFile = args.input_file
 outputFile = args.output_file
 inputCadd = float(args.cadd)
-inputMaf = float(args.maf)
+inputMaf = args.maf
+if inputMaf != "None":
+    inputMaf = float(args.maf)
 familyFile = args.fam_file
 
 #Function to get convert sample genotype from alpha to numeric
