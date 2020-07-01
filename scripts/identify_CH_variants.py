@@ -79,6 +79,18 @@ def getLineInfo(lineList):
     exonic = lineList[exonicIndex]
     return(start, gene, ref, alt, impact, cadd, maf, lof, exonic)
 
+def iterateThroughSamples():
+    for sampleIndex in sampleIndexes:
+        sample = headerList[sampleIndex]
+        genotype = lineList[sampleIndex]
+        newGenotype = getNumericGenotype(genotype, ref, alt)
+        if gene not in sampleGenotype[sample] and "." not in newGenotype:
+            sampleGenotype[sample][gene] = [newGenotype]
+            samplePositions[sample][gene] = [start]
+        elif gene in sampleGenotype[sample] and "." not in newGenotype:
+            sampleGenotype[sample][gene].append(newGenotype)
+            samplePositions[sample][gene].append(start)
+
 # Create a .tsv that has all pertinent information for compound heterozygous identification
 impactSeverity = "'LOW'"
 geminiTsv = f"{inputFile.replace('.db', '_gemini.tsv')}"
@@ -126,42 +138,18 @@ with open(geminiTsv) as geminiFile:
     for line in geminiFile:
         lineList = line.rstrip("\n").split("\t")
         start, gene, ref, alt, impact, cadd, maf, lof, exonic = getLineInfo(lineList)
-        if cadd != "None" and maf != "None" and inputMaf != "None":
-            if ((impact == "HIGH" or lof == "1") or (impact == "MED" and float(cadd) >= inputCadd and float(maf) <= inputMaf)):
-                for sampleIndex in sampleIndexes:
-                    sample = headerList[sampleIndex]
-                    genotype = lineList[sampleIndex]
-                    newGenotype = getNumericGenotype(genotype, ref, alt)
-                    if gene not in sampleGenotype[sample] and "." not in newGenotype:
-                        sampleGenotype[sample][gene] = [newGenotype]
-                        samplePositions[sample][gene] = [start]
-                    elif gene in sampleGenotype[sample] and "." not in newGenotype:
-                        sampleGenotype[sample][gene].append(newGenotype)
-                        samplePositions[sample][gene].append(start)
-        elif cadd == "None" or maf == "None":
+        if cadd != "None" and maf != "None":
+            if ((impact == "HIGH" or lof == "1") or (impact == "MED" and float(cadd) >= inputCadd)) and float(maf) <= inputMaf:
+                iterateThroughSamples()
+        elif cadd == "None" and maf == "None":
             if impact == "HIGH" or lof == "1":
-                for sampleIndex in sampleIndexes:
-                    sample = headerList[sampleIndex]
-                    genotype = lineList[sampleIndex]
-                    newGenotype = getNumericGenotype(genotype, ref, alt)
-                    if gene not in sampleGenotype[sample] and "." not in newGenotype:
-                        sampleGenotype[sample][gene] = [newGenotype]
-                        samplePositions[sample][gene] = [start]
-                    elif gene in sampleGenotype[sample] and "." not in newGenotype:
-                        sampleGenotype[sample][gene].append(newGenotype)
-                        samplePositions[sample][gene].append(start)
-        elif cadd != "None" and inputMaf == "None":
+                iterateThroughSamples()
+        elif cadd != "None" and maf == "None":
             if (impact == "HIGH" or lof == "1") or (impact == "MED" and float(cadd) >= inputCadd):
-                for sampleIndex in sampleIndexes:
-                    sample = headerList[sampleIndex]
-                    genotype = lineList[sampleIndex]
-                    newGenotype = getNumericGenotype(genotype, ref, alt)
-                    if gene not in sampleGenotype[sample] and "." not in newGenotype:
-                        sampleGenotype[sample][gene] = [newGenotype]
-                        samplePositions[sample][gene] = [start]
-                    elif gene in sampleGenotype[sample] and "." not in newGenotype:
-                        sampleGenotype[sample][gene].append(newGenotype)
-                        samplePositions[sample][gene].append(start)
+                iterateThroughSamples()
+        elif cadd == "None" and maf != "None":
+            if (impact == "HIGH" or lof == "1") and float(maf) <= inputMaf:
+                iterateThroughSamples()
 print("Sample Dictionaries Created.")
 
 """
