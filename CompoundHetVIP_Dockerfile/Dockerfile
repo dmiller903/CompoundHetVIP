@@ -64,6 +64,7 @@ apt-get update \
   && wget --no-check-certificate https://sourceforge.net/projects/snpeff/files/snpEff_v4_3t_core.zip \
   && unzip /snpEff_v4_3t_core.zip \
   && mkdir -p /snpEff/./data/GRCh37.75 \
+  && mkdir -p /snpEff/./data/GRCh38.86 \
   # Install gemini without annotation files or cadd scores
   && wget --no-check-certificate https://raw.githubusercontent.com/dmiller903/gemini/master/gemini/scripts/gemini_install.py \
   && python gemini_install.py --nodata /usr/local /usr/local/share/gemini \
