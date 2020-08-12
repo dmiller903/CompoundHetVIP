@@ -78,7 +78,7 @@ apt-get update \
   && wget --no-check-certificate http://lab.rockefeller.edu/casanova/assets/file/add_GDI.py.txt -O /add_GDI_raw.py \
   && wget --no-check-certificate http://lab.rockefeller.edu/casanova/assets/file/GDI_full_10282015.txt -O /GDI_full.txt \
   # Install vcf2db
-  && git clone https://github.com/quinlan-lab/vcf2db \
+  && git clone https://github.com/dmiller903/vcf2db.git \
   && cd vcf2db \
   && conda install -y -c conda-forge snappy \
   && conda install -y -c conda-forge python-snappy \
