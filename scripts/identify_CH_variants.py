@@ -196,8 +196,8 @@ else:
                 if parentGenotype1 == "1|1" or parentGenotype2 == "1|1":
                     continue
                 if "0|1" in genotypes and "1|0" in genotypes and genotype in ["1|0", "0|1"] and gene not in chPositionDict[patient]:
-                        chPositionDict[patient][gene] = [position]
-                        chGenotypeDict[patient][gene] = [genotype]
+                    chPositionDict[patient][gene] = [position]
+                    chGenotypeDict[patient][gene] = [genotype]
                 elif "0|1" in genotypes and "1|0" in genotypes and genotype in ["1|0", "0|1"] and gene in chPositionDict[patient]:
                     chPositionDict[patient][gene].append(position)
                     chGenotypeDict[patient][gene].append(genotype)
