@@ -108,7 +108,7 @@ if familyFile is not None:
     familyDict = {}
     with open(familyFile) as familyFile:
         for line in familyFile:
-            lineList = line.rstrip("\n").split("\t")
+            lineList = line.rstrip("\n").split()
             if lineList[-1] is "2":
                 parentDict[f"gts.{lineList[2]}"] = f"gts.{lineList[1]}"
                 parentDict[f"gts.{lineList[3]}"] = f"gts.{lineList[1]}"
