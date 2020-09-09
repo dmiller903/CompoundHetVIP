@@ -25,7 +25,7 @@ CompoundHetVIP is designed to be used with gVCF or VCF files. Please see [Compou
 
 11. Load VCF as GEMINI database
 
-12. Query for *CH* variants
+12. Query for *CH* variants (also supports de novo and homozygous alternate variant identification)
 
 13. Add [Gene Damage Index](http://lab.rockefeller.edu/casanova/GDI) Scores and Gene lengths to files
 
