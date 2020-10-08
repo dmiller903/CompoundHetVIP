@@ -213,7 +213,7 @@ with open(geminiTsv) as geminiFile, open(outputFile, "w") as outputFile:
         start, gene, ref, alt, impact, cadd, maf, lof, exonic = getLineInfo(lineList)
         for sampleIndex in sampleIndexes:
             sample = headerList[sampleIndex]
-            if sample in homAltPositionDict and gene in homAltPositionDict[sample] and start in homAltPositionDict[sample][gene] and len(homAltPositionDict[sample][gene]) >= 2:
+            if sample in homAltPositionDict and gene in homAltPositionDict[sample] and start in homAltPositionDict[sample][gene]:
                 genotype = lineList[sampleIndex]
                 numericGenotype = getNumericGenotype(genotype, ref, alt)
                 if "." not in numericGenotype and numericGenotype == "1|1":
