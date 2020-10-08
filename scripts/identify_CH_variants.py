@@ -208,7 +208,7 @@ else:
             for i, genotype in enumerate(genotypes):
                 positionList = samplePositions[sample][gene]
                 position = positionList[i]
-                #Ensure that the patient is compound heterozygotic in each gene
+                #Check for CH variation in each parent
                 if "0|1" in genotypes and "1|0" in genotypes and genotype in ["1|0", "0|1"] and gene not in chPositionDict[sample]:
                     chPositionDict[sample][gene] = [position]
                     chGenotypeDict[sample][gene] = [genotype]
@@ -233,6 +233,7 @@ with open(geminiTsv) as geminiFile, open(outputFile, "w") as outputFile:
             for line in geminiFile:
                 lineList = line.rstrip("\n").split("\t")
                 start, gene, ref, alt, impact, cadd, maf, lof, exonic = getLineInfo(lineList)
+                # Output CH variants that aren't in common with either parent
                 for sampleIndex in sampleIndexes:
                     sample = headerList[sampleIndex]
                     parent1 = familyDict[sample][0]
