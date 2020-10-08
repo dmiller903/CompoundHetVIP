@@ -8,15 +8,13 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description="Uses a GEMINI database as input to identify CH variants. If a \
---fam_file' is not used, false positives may result since parental haplotypes not being takin in to consideration.")
-
+parser = argparse.ArgumentParser(description="Uses a GEMINI database as input to identify homozygous alternate variants.")
 parser.add_argument('input_file', help='GEMINI database')
 parser.add_argument('output_file', help='Name of output file')
 parser.add_argument('--cadd', help='If you use strict argument, and want to customize cadd cut-off value.', default='15')
 parser.add_argument('--maf', help='If you use strict argument, and want to customize maf cut-off value.', default='0.01')
 parser.add_argument('--fam_file', help='If family relationships are known among the samples, use a fam file to help \
-with the CH identification process.')
+with the homozygous alternate identification process.')
 
 args = parser.parse_args()
 
@@ -184,7 +182,7 @@ else:
             for i, genotype in enumerate(genotypes):
                 positionList = samplePositions[patient][gene]
                 position = positionList[i]
-                #This part helps eliminate genotypes being added to the CH list where either parent is homozygous recessive
+                #This part helps eliminate genotypes being added to the homAlt list where either parent is homozygous recessive
                 parentGenotype1 = ""
                 parentGenotype2 = ""
                 if gene in samplePositions[parent1] and position in samplePositions[parent1][gene]:
@@ -200,9 +198,9 @@ else:
                     elif gene in homAltPositionDict[patient]:
                         homAltPositionDict[patient][gene].append(position)
                         homAltGenotypeDict[patient][gene].append(genotype)
-print("CH variant dictionaries created.")
+print("Homozygous alterante variant dictionaries created.")
 
-#Iterate through the input file and use the homAltPositionDict in order to output CH variant data for each sample
+#Iterate through the input file and use the homAltPositionDict in order to output homozygous alternate variant data for each sample
 with open(geminiTsv) as geminiFile, open(outputFile, "w") as outputFile:
     header = geminiFile.readline()
     headerList = header.rstrip("\n").split("\t")
