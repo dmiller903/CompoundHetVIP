@@ -22,9 +22,9 @@ args = parser.parse_args()
 inputFile = args.input_file
 outputFile = args.output_file
 inputCadd = float(args.cadd)
-inputMaf = args.maf
-if inputMaf != "None":
-    inputMaf = float(args.maf)
+inputAF = args.maf
+if inputAF != "None":
+    inputAF = float(args.maf)
 familyFile = args.fam_file
 
 #Function to get convert sample genotype from alpha to numeric
@@ -58,11 +58,14 @@ def getHeaderInfo(headerList):
     altIndex = headerList.index("alt")
     impactIndex = headerList.index("impact_severity")
     caddIndex = headerList.index("cadd_scaled")
-    mafIndex = headerList.index("aaf_1kg_all")
+    af1KIndex = headerList.index("aaf_1kg_all")
+    afGnomADIndex = headerList.index("aaf_gnomad_all")
     lofIndex = headerList.index("is_lof")
     exonicIndex = headerList.index("is_exonic")
-    samples = headerList[13:]
-    return(startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, mafIndex, lofIndex, exonicIndex, samples)
+    rsIndex = headerList.index("rs_ids")
+    clinVarIndex = headerList.index("clinvar_sig")
+    samples = headerList[16:]
+    return(startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, af1KIndex, afGnomADIndex, lofIndex, exonicIndex, rsIndex, clinVarIndex, samples)
 
 #Function to grab information from line of input file
 def getLineInfo(lineList):
@@ -72,10 +75,13 @@ def getLineInfo(lineList):
     alt = lineList[altIndex]
     impact = lineList[impactIndex]
     cadd = lineList[caddIndex]
-    maf = lineList[mafIndex]
+    af1K = lineList[af1KIndex]
+    afGnomAD = lineList[afGnomADIndex]
     lof = lineList[lofIndex]
     exonic = lineList[exonicIndex]
-    return(start, gene, ref, alt, impact, cadd, maf, lof, exonic)
+    rs = lineList[rsIndex]
+    clinVar = lineList[clinVarIndex]
+    return(start, gene, ref, alt, impact, cadd, af1K, afGnomAD, lof, exonic, rs, clinVar)
 
 def iterateThroughSamples():
     for sampleIndex in sampleIndexes:
@@ -85,16 +91,18 @@ def iterateThroughSamples():
         if gene not in sampleGenotype[sample] and "." not in newGenotype:
             sampleGenotype[sample][gene] = [newGenotype]
             samplePositions[sample][gene] = [start]
+            sampleAf[sample][gene] = [af]
         elif gene in sampleGenotype[sample] and "." not in newGenotype:
             sampleGenotype[sample][gene].append(newGenotype)
             samplePositions[sample][gene].append(start)
+            sampleAf[sample][gene].append(af)
 
 # Create a .tsv that has all pertinent information for compound heterozygous identification
 impactSeverity = "'LOW'"
 geminiTsv = f"{inputFile.replace('.db', '_gemini.tsv')}"
 if not os.path.exists(geminiTsv):
     os.system(f'gemini query --header -q "select chrom, start, vcf_id, ref, alt, gene, is_exonic, impact_severity, \
-        is_lof, aaf_1kg_all, cadd_scaled, impact, biotype, (gts).(*) from variants where impact_severity != {impactSeverity}" \
+        is_lof, aaf_1kg_all, aaf_gnomad_all, cadd_scaled, impact, biotype, rs_ids, clinvar_sig, (gts).(*) from variants where impact_severity != {impactSeverity}" \
         {inputFile} \
         > {geminiTsv}')
 
@@ -124,29 +132,28 @@ severity criteria. The samplePositions has the same information, except the list
 
 sampleGenotype = {}
 samplePositions = {}
+sampleAf = {}
 sampleIndexes = []
 with open(geminiTsv) as geminiFile:
     header = geminiFile.readline()
     headerList = header.rstrip("\n").split("\t")
-    startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, mafIndex, lofIndex, exonicIndex, samples = getHeaderInfo(headerList)
+    startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, af1KIndex, afGnomADIndex, lofIndex, exonicIndex, rsIndex, clinVarIndex, samples = getHeaderInfo(headerList)
     for sample in samples:
         sampleIndexes.append(headerList.index(sample))
         sampleGenotype[sample] = {}
-        samplePositions[sample] = {}    
+        samplePositions[sample] = {}
+        sampleAf[sample] = {}     
     for line in geminiFile:
         lineList = line.rstrip("\n").split("\t")
-        start, gene, ref, alt, impact, cadd, maf, lof, exonic = getLineInfo(lineList)
-        if cadd != "None" and maf != "None":
-            if ((impact == "HIGH" or lof == "1") or (impact == "MED" and float(cadd) >= inputCadd)) and float(maf) <= inputMaf:
-                iterateThroughSamples()
-        elif cadd == "None" and maf == "None":
-            if impact == "HIGH" or lof == "1":
-                iterateThroughSamples()
-        elif cadd != "None" and maf == "None":
-            if (impact == "HIGH" or lof == "1") or (impact == "MED" and float(cadd) >= inputCadd):
-                iterateThroughSamples()
-        elif cadd == "None" and maf != "None":
-            if (impact == "HIGH" or lof == "1") and float(maf) <= inputMaf:
+        start, gene, ref, alt, impact, cadd, af1K, afGnomAD, lof, exonic, rs, clinVar = getLineInfo(lineList)
+        if afGnomAD not in ["-1.0", "None"]:
+            af = afGnomAD
+        elif af1K not in ["-1.0", "None"] and afGnomAD not in ["-1.0", "None"]:
+            af = af1K
+        else:
+            continue
+        if cadd != "None" and af != "None":
+            if float(cadd) >= inputCadd and float(af) <= inputAF and impact == "HIGH":
                 iterateThroughSamples()
 print("Sample Dictionaries Created.")
 
@@ -157,31 +164,40 @@ a dictionary where the key is a gene and the value is a list of genotypes (or po
 
 homAltPositionDict = {}
 homAltGenotypeDict = {}
+homAltAfDict = {}
 if familyFile is None:
     for sample in samples:
         homAltPositionDict[sample] = {}
         homAltGenotypeDict[sample] = {}
+        homAltAfDict[sample] = {}
         for gene, genotypes in sampleGenotype[sample].items():
             for i, genotype in enumerate(genotypes):
                 positionList = samplePositions[sample][gene]
                 position = positionList[i]
+                afList = sampleAf[sample][gene]
+                af = afList[i]
                 #Ensure that the patient is compound heterozygotic in each gene
                 if genotype == "1|1" and gene not in homAltPositionDict[sample]:
                     homAltPositionDict[sample][gene] = [position]
                     homAltGenotypeDict[sample][gene] = [genotype]
+                    homAltAfDict[sample][gene] = [af]
                 elif genotype == "1|1" and gene in homAltPositionDict[sample]:
                     homAltPositionDict[sample][gene].append(position)
                     homAltGenotypeDict[sample][gene].append(genotype)
+                    homAltAfDict[sample][gene].append(af)
 else:
     for patient in patientList:
         homAltPositionDict[patient] = {}
         homAltGenotypeDict[patient] = {}
+        homAltAfDict[patient] = {}
         parent1 = familyDict[patient][0]
         parent2 = familyDict[patient][1]
         for gene, genotypes in sampleGenotype[patient].items():
             for i, genotype in enumerate(genotypes):
                 positionList = samplePositions[patient][gene]
                 position = positionList[i]
+                afList = sampleAf[patient][gene]
+                af = afList[i]
                 #This part helps eliminate genotypes being added to the homAlt list where either parent is homozygous recessive
                 parentGenotype1 = ""
                 parentGenotype2 = ""
@@ -195,29 +211,31 @@ else:
                     if gene not in homAltPositionDict[patient]:
                         homAltPositionDict[patient][gene] = [position]
                         homAltGenotypeDict[patient][gene] = [genotype]
+                        homAltAfDict[patient][gene] = [af]
                     elif gene in homAltPositionDict[patient]:
                         homAltPositionDict[patient][gene].append(position)
                         homAltGenotypeDict[patient][gene].append(genotype)
+                        homAltAfDict[patient][gene].append(af)
 print("Homozygous alterante variant dictionaries created.")
 
 #Iterate through the input file and use the homAltPositionDict in order to output homozygous alternate variant data for each sample
 with open(geminiTsv) as geminiFile, open(outputFile, "w") as outputFile:
     header = geminiFile.readline()
     headerList = header.rstrip("\n").split("\t")
-    startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, mafIndex, lofIndex, exonicIndex, samples = getHeaderInfo(headerList)
-    columnInfo = headerList[0:13]
+    startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, af1KIndex, afGnomADIndex, lofIndex, exonicIndex, rsIndex, clinVarIndex, samples = getHeaderInfo(headerList)
+    columnInfo = headerList[0:16]
     newHeader = "\t".join(columnInfo) + "\tgenotype\tsample\n"
     outputFile.write(newHeader)
     for line in geminiFile:
         lineList = line.rstrip("\n").split("\t")
-        start, gene, ref, alt, impact, cadd, maf, lof, exonic = getLineInfo(lineList)
+        start, gene, ref, alt, impact, cadd, af1K, afGnomAD, lof, exonic, rs, clinVar = getLineInfo(lineList)
         for sampleIndex in sampleIndexes:
             sample = headerList[sampleIndex]
             if sample in homAltPositionDict and gene in homAltPositionDict[sample] and start in homAltPositionDict[sample][gene]:
                 genotype = lineList[sampleIndex]
                 numericGenotype = getNumericGenotype(genotype, ref, alt)
                 if "." not in numericGenotype and numericGenotype == "1|1":
-                    columnInfo = lineList[0:13]
+                    columnInfo = lineList[0:16]
                     columnStr = "\t".join(columnInfo)
                     newLine = f"{columnStr}\t{numericGenotype}\t{sample.replace('gts.', '')}\n"
                     outputFile.write(newLine)
