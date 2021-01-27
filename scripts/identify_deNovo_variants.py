@@ -24,9 +24,9 @@ inputFile = args.input_file
 outputFile = args.output_file
 familyFile = args.fam_file
 inputCadd = float(args.cadd)
-inputMaf = args.maf
-if inputMaf != "None":
-    inputMaf = float(args.maf)
+inputAF = args.maf
+if inputAF != "None":
+    inputAF = float(args.maf)
 
 #Function to get convert sample genotype from alpha to numeric
 def getNumericGenotype(genotype, ref, alt):
@@ -59,11 +59,12 @@ def getHeaderInfo(headerList):
     altIndex = headerList.index("alt")
     impactIndex = headerList.index("impact_severity")
     caddIndex = headerList.index("cadd_scaled")
-    mafIndex = headerList.index("aaf_1kg_all")
+    af1kIndex = headerList.index("aaf_1kg_all")
+    afGnomADIndex = headerList.index("aaf_gnomad_all")
     lofIndex = headerList.index("is_lof")
     exonicIndex = headerList.index("is_exonic")
     samples = headerList[13:]
-    return(startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, mafIndex, lofIndex, exonicIndex, samples)
+    return(startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, af1kIndex, afGnomADIndex, lofIndex, exonicIndex, samples)
 
 #Function to grab information from line of input file
 def getLineInfo(lineList):
@@ -73,10 +74,11 @@ def getLineInfo(lineList):
     alt = lineList[altIndex]
     impact = lineList[impactIndex]
     cadd = lineList[caddIndex]
-    maf = lineList[mafIndex]
+    af1K = lineList[af1kIndex]
+    afGnomAD = lineList[afGnomADIndex]
     lof = lineList[lofIndex]
     exonic = lineList[exonicIndex]
-    return(start, gene, ref, alt, impact, cadd, maf, lof, exonic)
+    return(start, gene, ref, alt, impact, cadd, af1K, afGnomAD, lof, exonic)
 
 def iterateThroughSamples():
     for sampleIndex in sampleIndexes:
@@ -92,12 +94,25 @@ def iterateThroughSamples():
 
 # Create a .tsv that has all pertinent information for compound heterozygous identification
 impactSeverity = "'LOW'"
+tempTsv = "/tmp/temp.tsv"
 geminiTsv = f"{inputFile.replace('.db', '_gemini.tsv')}"
 if not os.path.exists(geminiTsv):
     os.system(f'gemini query --header -q "select chrom, start, vcf_id, ref, alt, gene, is_exonic, impact_severity, \
         is_lof, aaf_1kg_all, cadd_scaled, impact, biotype, (gts).(*) from variants where impact_severity != {impactSeverity}" \
         {inputFile} \
-        > {geminiTsv}')
+        > {tempTsv}')
+    
+    # 1-base the start positions. GEMINI 0-bases them for some reason
+    with open(tempTsv) as geminiTemp, open(geminiTsv, 'w') as outFile:
+        header = geminiTemp.readline()
+        headerList = header.rstrip("\n").split("\t")
+        startIndex = headerList.index("start")
+        outFile.write(header)
+        for line in geminiTemp:
+            lineList = line.rstrip("\n").split("\t")
+            lineList[startIndex] = str(int(lineList[startIndex]) + 1)
+            line = "\t".join(lineList) + "\n"
+            outFile.write(line)
 
 # Use fam file to create a list of samples, list of parents, and a parent dictionary where each key is a parent ID and value is sample ID
 parentDict = {}
@@ -128,25 +143,23 @@ sampleIndexes = []
 with open(geminiTsv) as geminiFile:
     header = geminiFile.readline()
     headerList = header.rstrip("\n").split("\t")
-    startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, mafIndex, lofIndex, exonicIndex, samples = getHeaderInfo(headerList)
+    startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, af1kIndex, afGnomADIndex, lofIndex, exonicIndex, samples = getHeaderInfo(headerList)
     for sample in samples:
         sampleIndexes.append(headerList.index(sample))
         sampleGenotype[sample] = {}
         samplePositions[sample] = {}    
     for line in geminiFile:
         lineList = line.rstrip("\n").split("\t")
-        start, gene, ref, alt, impact, cadd, maf, lof, exonic = getLineInfo(lineList)
-        if cadd != "None" and maf != "None":
-            if ((impact == "HIGH" or lof == "1") or (impact == "MED" and float(cadd) >= inputCadd)) and float(maf) <= inputMaf:
-                iterateThroughSamples()
-        elif cadd == "None" and maf == "None":
-            if impact == "HIGH" or lof == "1":
-                iterateThroughSamples()
-        elif cadd != "None" and maf == "None":
-            if (impact == "HIGH" or lof == "1") or (impact == "MED" and float(cadd) >= inputCadd):
-                iterateThroughSamples()
-        elif cadd == "None" and maf != "None":
-            if (impact == "HIGH" or lof == "1") and float(maf) <= inputMaf:
+        start, gene, ref, alt, impact, cadd, af1K, afGnomAD, lof, exonic = getLineInfo(lineList)
+        if afGnomAD not in ["-1.0", "None"]:
+            af = afGnomAD
+        elif af1K not in ["-1.0", "None"] and afGnomAD not in ["-1.0", "None"]:
+            af = af1K
+        else:
+            continue
+        
+        if cadd != "None" and af != "None" and exonic == "1":
+            if float(cadd) >= inputCadd and float(af) <= inputAF and impact in ["HIGH", "MED"]:
                 iterateThroughSamples()
 print("Sample Dictionaries Created.")
 
@@ -187,7 +200,7 @@ print("de Novo variant dictionaries created.")
 with open(geminiTsv) as geminiFile, open(outputFile, "w") as outputFile:
     header = geminiFile.readline()
     headerList = header.rstrip("\n").split("\t")
-    startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, mafIndex, lofIndex, exonicIndex, samples = getHeaderInfo(headerList)
+    startIndex, geneIndex, refIndex, altIndex, impactIndex, caddIndex, af1kIndex, afGnomADIndex, lofIndex, exonicIndex, samples = getHeaderInfo(headerList)
     columnInfo = headerList[0:13]
     newHeader = "\t".join(columnInfo) + "\tgenotype\tsample\n"
     outputFile.write(newHeader)
@@ -197,7 +210,7 @@ with open(geminiTsv) as geminiFile, open(outputFile, "w") as outputFile:
         sampleIndexes.append(patientIndex)
     for line in geminiFile:
         lineList = line.rstrip("\n").split("\t")
-        start, gene, ref, alt, impact, cadd, maf, lof, exonic = getLineInfo(lineList)
+        start, gene, ref, alt, impact, cadd, af1K, afGnomAD, lof, exonic = getLineInfo(lineList)
         for sampleIndex in sampleIndexes:
             sample = headerList[sampleIndex]
             parent1 = familyDict[sample][0]
