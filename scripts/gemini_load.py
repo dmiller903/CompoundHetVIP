@@ -14,6 +14,7 @@ parser.add_argument('input_vcf', help='Annotated VCF File')
 parser.add_argument('output_database', help='Name of output database (name needs to end in .db)')
 parser.add_argument('--fam_file', help="If you have family's in the VCF file, include a fam file")
 parser.add_argument('--num_cores', help='Loading will go quicker if more cores are available', default=2)
+parser.add_argument('--anno_program', help='Indicate whether the input vcf was annotated with snpEff or VEP', default='snpEff')
 
 args = parser.parse_args()
 
@@ -22,6 +23,9 @@ inputFile = args.input_vcf
 databaseName = args.output_database
 famFile = args.fam_file
 cores = args.num_cores
+anno = args.anno_program
+if "v" in anno or "V" in anno:
+    anno = anno.upper()
 
 # Download annotation files and CADD files if they haven't been downloaded already
 if not os.path.exists("/usr/local/share/gemini/gemini_data/hg19.vista.enhancers.20131108.bed.gz.tbi"):
@@ -30,10 +34,10 @@ if not os.path.exists("/usr/local/share/gemini/gemini_data/hg19.vista.enhancers.
 # Load annotated file into a GEMINI database
 if famFile != None:
     os.system(f"gemini load -v {inputFile} \
-    -p {famFile} -t snpEff --cores {cores} {databaseName}")
+    -p {famFile} -t {anno} --cores {cores} {databaseName}")
 elif famFile == None:
     os.system(f"gemini load -v {inputFile} \
-    -t snpEff --cores {cores} {databaseName}")
+    -t {anno} --cores {cores} {databaseName}")
 
 # Print output information
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
