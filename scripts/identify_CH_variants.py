@@ -17,6 +17,9 @@ parser.add_argument('--cadd', help='If you use strict argument, and want to cust
 parser.add_argument('--maf', help='If you use strict argument, and want to customize maf cut-off value.', default='0.01')
 parser.add_argument('--fam_file', help='If family relationships are known among the samples, use a fam file to help \
 with the CH identification process.')
+parser.add_argument('--upper_bound', help='If you want to allow for scenarios where one variant in a CH pair can be \
+rare and the other common, this argument will allow you to choose the highest maf that a variant can be. One of the variants \
+in a CH pair can be as high as the value you set, and the other has to below your --maf argument.', default = '0.01')
 
 args = parser.parse_args()
 
@@ -28,6 +31,7 @@ inputAF = args.maf
 if inputAF != "None":
     inputAF = float(args.maf)
 familyFile = args.fam_file
+upperBound = float(args.upper_bound)
 
 #Function to get convert sample genotype from alpha to numeric
 def getNumericGenotype(genotype, ref, alt):
@@ -101,12 +105,25 @@ def iterateThroughSamples():
 
 # Create a .tsv that has all pertinent information for compound heterozygous identification
 impactSeverity = "'LOW'"
+tempTsv = "/tmp/temp.tsv"
 geminiTsv = f"{inputFile.replace('.db', '_gemini.tsv')}"
 if not os.path.exists(geminiTsv):
     os.system(f'gemini query --header -q "select chrom, start, vcf_id, ref, alt, gene, is_exonic, impact_severity, \
         is_lof, aaf_1kg_all, aaf_gnomad_all, cadd_scaled, impact, biotype, rs_ids, clinvar_sig, (gts).(*) from variants where impact_severity != {impactSeverity}" \
         {inputFile} \
-        > {geminiTsv}')
+        > {tempTsv}')
+
+    # 1-base the start positions. GEMINI 0-bases them for some reason
+    with open(tempTsv) as geminiTemp, open(geminiTsv, 'w') as outFile:
+        header = geminiTemp.readline()
+        headerList = header.rstrip("\n").split("\t")
+        startIndex = headerList.index("start")
+        outFile.write(header)
+        for line in geminiTemp:
+            lineList = line.rstrip("\n").split("\t")
+            lineList[startIndex] = str(int(lineList[startIndex]) + 1)
+            line = "\t".join(lineList) + "\n"
+            outFile.write(line)
 
 # Use fam file to create a list of samples, list of parents, and a parent dictionary where each key is a parent ID and value is sample ID
 if familyFile is not None:
@@ -154,8 +171,8 @@ with open(geminiTsv) as geminiFile:
             af = af1K
         else:
             continue
-        if cadd != "None" and af != "None":
-            if float(cadd) >= inputCadd and float(af) <= 1 and impact == "HIGH":
+        if cadd != "None" and af != "None" and exonic == "1":
+            if float(cadd) >= inputCadd and float(af) <= upperBound and impact in ["HIGH", "MED"]:
                 iterateThroughSamples()
 print("Sample Dictionaries Created.")
 
