@@ -8,14 +8,14 @@ startTime = time.time()
 char = '\n' + ('*' * 70) + '\n'
 
 # Argparse Information
-parser = argparse.ArgumentParser(description="Uses a GEMINI database as input to identify de Novo variants. If a \
---fam_file' is not used, false positives may result since parental haplotypes not being takin in to consideration.")
+parser = argparse.ArgumentParser(description="Uses a GEMINI database as input to identify de Novo variants. A \
+                                            fam file is necessary so family relationships can be determined")
 
 parser.add_argument('input_file', help='GEMINI database')
 parser.add_argument('output_file', help='Name of output file')
 parser.add_argument('fam_file', help='Family relationships are mandatory to help with the de Novo identification process.')
-parser.add_argument('--cadd', help='If you use strict argument, and want to customize cadd cut-off value.', default='15')
-parser.add_argument('--maf', help='If you use strict argument, and want to customize maf cut-off value.', default='0.01')
+parser.add_argument('--cadd', help='Use to customize cadd cut-off value.', default='15')
+parser.add_argument('--maf', help='Use to customize maf cut-off value.', default='0.01')
 
 args = parser.parse_args()
 
