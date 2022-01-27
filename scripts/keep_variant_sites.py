@@ -53,14 +53,15 @@ if isGvcf == "y":
             if line.startswith('#'):
                 parsed.write(line.encode())
             elif "END" not in line:
-                parsed.write(line.encode())
-                line = line.split("\t")
-                chrom = line[0]
-                pos = line[1]
+                line_list = line.split("\t")
+                chrom = line_list[0]
+                pos = line_list[1]
                 if chrom not in positionDict and chrom in chrToKeep:
                     positionDict[chrom] = {pos}
+                    parsed.write(line.encode())
                 elif chrom in positionDict:
                     positionDict[chrom].add(pos)
+                    parsed.write(line.encode())
     #bgzip file
     os.system(f"zcat {outputName} | /root/miniconda2/bin/bgzip > {outputName}.gz")
     os.system(f"rm {outputName}")
