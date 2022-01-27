@@ -87,20 +87,21 @@ def filterParents(file):
                 lineList = line.split("\t")
                 chrom = lineList[0]
                 pos = lineList[1]
-                if pos in positionDict[chrom]:
+                if chrom in positionDict and pos in positionDict[chrom]:
                     parsed.write(line.encode())
                 else:
                     if "END" in line:
                         for i in range(int(pos), int(lineList[7].lstrip("END=")) + 1):
-                            if str(i) in positionDict[chrom]:
+                            if chrom in positionDict and str(i) in positionDict[chrom]:
                                 parsed.write(line.encode())
-    #bgzip file
-    os.system(f"zcat {outputName} | /root/miniconda2/bin/bgzip > {outputName}.gz")
-    os.system(f"rm {outputName}")
+        return(outputName)
 
 if parent1File != None and parent2File != None:
     with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
-        executor.map(filterParents, [parent1File, parent2File])
+        for outputName in executor.map(filterParents, [parent1File, parent2File]):
+            #bgzip file
+            os.system(f"zcat {outputName} | /root/miniconda2/bin/bgzip > {outputName}.gz")
+            os.system(f"rm {outputName}")
 
 #Print message and how long the previous steps took
 timeElapsedMinutes = round((time.time()-startTime) / 60, 2)
