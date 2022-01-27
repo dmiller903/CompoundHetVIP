@@ -19,6 +19,8 @@ parser.add_argument('parent_2_vcf', help='Maternal or Paternal VCF File of Proba
 parser.add_argument('output_vcf', help='Path and name of combined vcf output file. Include ".gz" at the end of the file name')
 parser.add_argument('--is_gvcf', help="If a gVCF file is used, GATK tools are used to combine files. If VCF files are used, \
 bcftools is used", default='y')
+parser.add_argument('--disable_strand_bias_test', help="Some scenarios may result in an error when calculating strand bias. \
+                    If this is the case, disabling strand bias may solve the issue", default="n")
 
 args = parser.parse_args()
 
@@ -28,6 +30,7 @@ parent1File = args.parent_1_vcf
 parent2File = args.parent_2_vcf
 outputName = args.output_vcf
 isGvcf = args.is_gvcf
+disableSB = args.disable_strand_bias_test
 
 # Download reference files if needed
 if not os.path.exists("/references/Homo_sapiens_assembly38.fasta") and isGvcf == "y":
@@ -53,7 +56,10 @@ if isGvcf == "y":
             os.system(f"/root/miniconda2/bin/gatk IndexFeatureFile -F {file}")
         os.system(f"/root/miniconda2/bin/gatk CombineGVCFs -R /references/Homo_sapiens_assembly38.fasta {fileString} -O {tempName}")
         os.system(f"gatk IndexFeatureFile -F {tempName}")
-        os.system(f"gatk --java-options '-Xmx4g' GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {tempName} -O {outputName}")
+        if disableSB == "n":
+            os.system(f"gatk --java-options '-Xmx4g' GenotypeGVCFs -R /references/Homo_sapiens_assembly38.fasta -V {tempName} -O {outputName}")
+        else:
+            os.system(f"gatk --java-options '-Xmx4g' GenotypeGVCFs -AX FisherStrand -AX StrandOddsRatio -R /references/Homo_sapiens_assembly38.fasta -V {tempName} -O {outputName}")
     except:
         print("Trio not combined, there was an error detected by GATK")
 
