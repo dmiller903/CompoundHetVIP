@@ -39,6 +39,10 @@ outputPath = args.output_path.rstrip("/")
 isGvcf = args.is_gvcf
 outputSuffix = args.output_suffix.rstrip(".gz")
 
+# Set of chromosomes to keep
+chrToKeep = {"chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13",\
+ "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY"}
+
 #Filter each sample file, remove  variants-only sites, create a dictionary of variant-only sites
 fileName = re.findall(r'/?([\w\-_]+)\.?g?\.vcf\.gz', sampleFile)[0]
 outputName = f"{outputPath}/{fileName}{outputSuffix}"
@@ -53,9 +57,9 @@ if isGvcf == "y":
                 line = line.split("\t")
                 chrom = line[0]
                 pos = line[1]
-                if chrom not in positionDict:
+                if chrom not in positionDict and chrom in chrToKeep:
                     positionDict[chrom] = {pos}
-                else:
+                elif chrom in positionDict:
                     positionDict[chrom].add(pos)
     #bgzip file
     os.system(f"zcat {outputName} | /root/miniconda2/bin/bgzip > {outputName}.gz")
@@ -70,9 +74,9 @@ elif isGvcf == "n":
                 line = line.split("\t")
                 chrom = line[0]
                 pos = line[1]
-                if chrom not in positionDict:
+                if chrom not in positionDict and chrom in chrToKeep:
                     positionDict[chrom] = {pos}
-                else:
+                elif chrom in positionDict:
                     positionDict[chrom].add(pos)
 
 #Filter each parent file for sites that occur in sample of that family
