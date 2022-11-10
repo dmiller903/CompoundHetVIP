@@ -52,7 +52,7 @@ if isGvcf == "y":
         for line in gVCF:
             if line.startswith('#'):
                 parsed.write(line.encode())
-            elif "END" not in line:
+            elif "END=" not in line:
                 line_list = line.split("\t")
                 chrom = line_list[0]
                 pos = line_list[1]
@@ -95,7 +95,7 @@ def filterParents(file):
                 if chrom in positionDict and pos in positionDict[chrom]:
                     parsed.write(line.encode())
                 else:
-                    if "END" in line:
+                    if "END=" in line and isGvcf == "y":
                         for i in range(int(pos), int(lineList[7].lstrip("END=")) + 1):
                             if chrom in positionDict and str(i) in positionDict[chrom]:
                                 parsed.write(line.encode())
